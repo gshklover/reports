@@ -1,0 +1,10 @@
+{% if data.orientation == "vertical" %}
+{% set class = "reports-vbox" %}
+{% else %}
+{% set class = "reports-hbox" %}
+{% endif %}
+<div class={{class}}>
+    {% for c in data.content %}
+        {{render(c)}}
+    {% endfor %}
+</div>
