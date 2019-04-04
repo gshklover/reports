@@ -131,7 +131,7 @@ class HtmlEngine(Engine):
 
     def _render_combo_chart(self, obj):
         """
-        Render a combination of lines and bars on the same chart
+        Render a combination of lines and bars on the same chart.
         :param obj: ComboChart
         :return: HTML
         """
