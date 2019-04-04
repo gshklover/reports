@@ -45,6 +45,10 @@ class Section(Box):
     def title(self):
         return self._title
 
+    @title.setter
+    def title(self, val):
+        self._title = val
+
     @property
     def level(self):
         """
