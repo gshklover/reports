@@ -78,13 +78,14 @@ class HtmlEngine(Engine):
         """
         Render pandas table
         """
-        style = obj.data.style
+        style = obj.data.style.set_table_attributes('class="table-sm table-striped"')
         table_styles = []
         if not obj.header:
             table_styles.append({'selector': '.col_heading', 'props': [('display', 'none')]})
 
         if not obj.index:
             table_styles.append({'selector': '.row_heading', 'props': [('display', 'none')]})
+            table_styles.append({'selector': '.blank.level0', 'props': [('display', 'none')]})
 
         if len(table_styles):
             style = style.set_table_styles(table_styles)
@@ -97,11 +98,12 @@ class HtmlEngine(Engine):
 
         if obj.column_style:
             if callable(obj.column_style):
-                style = style.apply(lambda x: self._apply_style(x, obj.column_style(x)), axis=0)
+                style = style.apply(lambda x: self._apply_style(x, obj.column_style), axis=0)
             else:
                 if not isinstance(obj.column_style, dict):
                     raise(Exception("Column style should be a callback or a dictionary"))
-                style = style.apply(lambda x: self._apply_style(x, obj.column_style.get(x.name, None)), axis=0)
+                d = obj.column_style
+                style = style.apply(lambda x: self._apply_style(x, d.get(x.name, None)), axis=0)
 
         return style.render()
 
@@ -166,11 +168,18 @@ class HtmlEngine(Engine):
         """
         Clone single style N times according to series shape
         :param series: pandas.Series() object
-        :param style: TextStyle instance
+        :param style: TextStyle instance, None or callable
         :return: pandas.Series() with CSS style
         """
-        style = self._text_style_to_css(style) if style else ''
-        return pandas.Series([style] * len(series), index=series.index)
+        if callable(style):
+            style = style(series)
+
+        if hasattr(style, '__len__'):
+            style = [self._text_style_to_css(s) if s is not None else '' for s in style]
+        else:
+            style = self._text_style_to_css(style) if style is not None else ''
+            style = [style] * len(series)
+        return pandas.Series(style, index=series.index)
 
     def _text_style_to_css(self, text_style):
         """
@@ -186,5 +195,8 @@ class HtmlEngine(Engine):
 
         if text_style.size:
             result.append('font-size: {}'.format(text_style.size))
+
+        if text_style.color is not None:
+            result.append('color: {}'.format(text_style.color))
 
         return '; '.join(result)

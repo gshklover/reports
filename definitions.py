@@ -127,10 +127,11 @@ class TextStyle:
     """
     BOLD = 'bold'
 
-    def __init__(self, size=None, weight=None, align=None):
+    def __init__(self, size=None, weight=None, align=None, color=None):
         self._size = size
         self._weight = weight
         self._align = align
+        self._color = color
 
     @property
     def size(self):
@@ -143,6 +144,10 @@ class TextStyle:
     @property
     def align(self):
         return self._align
+
+    @property
+    def color(self):
+        return self._color
 
 
 class Chart(Content):
