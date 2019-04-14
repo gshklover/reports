@@ -1,7 +1,12 @@
+import bokeh.embed
+import bokeh.models
+from bokeh.palettes import Dark2_5 as palette
+import bokeh.plotting
+import bokeh.resources
+import itertools
 from jinja2 import Environment, PackageLoader
+import numpy
 import pandas
-from plotly.offline import plot
-import plotly.graph_objs as go
 
 from .definitions import Engine, Report, Section, Box, Table, TextStyle, LineChart, ComboChart
 
@@ -109,27 +114,23 @@ class HtmlEngine(Engine):
 
     def _render_line_chart(self, obj):
         """
-        Render a line chart using plotly
+        Render a line chart using bokeh
         :param obj: LineChart
         """
-        data = [go.Scatter(name=s.title, x=s.x, y=s.y) for s in obj.series]
-        res = plot({
-            'data': data,
-            'layout': {
-                'title': obj.title,
-                'width': 500 if obj.size == LineChart.MEDIUM else 700,
-                'height': 350 if obj.size == LineChart.MEDIUM else 450,
-                'autosize': True,
-                'yaxis': {
-                    'automargin': True
-                },
-                'xaxis': {
-                    'automargin': True
-                }
-            }
-        }, show_link=False, output_type='div', include_plotlyjs=self._include_js, include_mathjax=False)
+        fig = bokeh.plotting.figure(
+            toolbar_location=None,
+            title=obj.title,
+            plot_width=500 if obj.size == LineChart.MEDIUM else 700,
+            plot_height=350 if obj.size == LineChart.MEDIUM else 450,
+        )
+
+        colors = itertools.cycle(palette)
+
+        for s in obj.series:
+            fig.line(x=s.x, y=s.y, legend=s.title, color=next(colors))
+
         self._include_js = False
-        return res
+        return bokeh.embed.file_html(fig, bokeh.resources.CDN)
 
     def _render_combo_chart(self, obj):
         """
@@ -137,32 +138,30 @@ class HtmlEngine(Engine):
         :param obj: ComboChart
         :return: HTML
         """
-        data = [go.Scatter(name=s.title, x=s.x, y=s.y) for s in obj.lines]
-        data += [go.Bar(name=s.title, x=s.x, y=s.y, yaxis='y2') for s in obj.bars]
+        fig = bokeh.plotting.figure(
+            toolbar_location=None,
+            title=obj.title,
+            plot_width=500 if obj.size == LineChart.MEDIUM else 700,
+            plot_height=350 if obj.size == LineChart.MEDIUM else 450,
+        )
 
-        res = plot({
-            'data': data,
-            'layout': {
-                'title': obj.title,
-                'width': 500 if obj.size == LineChart.MEDIUM else 700,
-                'height': 350 if obj.size == LineChart.MEDIUM else 450,
-                'autosize': True,
-                'yaxis': {
-                    'automargin': True
-                },
-                'yaxis2': {
-                    'side': 'right',
-                    'overlaying':'y',
-                },
-                'xaxis': {
-                    'automargin': True,
-                    'type': 'category'
-                },
-                'showlegend': len(obj.lines) > 1 or len(obj.bars) > 1
-            }
-        }, show_link=False, output_type='div', include_plotlyjs=self._include_js, include_mathjax=False)
+        colors = itertools.cycle(palette)
+
+        # render lines
+        for s in obj.lines:
+            color = next(colors)
+            # TODO: sort line values
+            fig.line(x=s.x, y=s.y, legend=s.title, color=color)
+            fig.circle(x=s.x, y=s.y, size=5, legend=s.title)
+
+        # render bars:
+        fig.extra_y_ranges['y2'] = bokeh.models.Range1d()
+        fig.add_layout(bokeh.models.LinearAxis(y_range_name='y2'), 'right')
+        for s in obj.bars:
+            fig.vbar(x=s.x, top=s.y, width=0.8, legend=s.title, y_range_name='y2', color=next(colors))
+
         self._include_js = False
-        return res
+        return bokeh.embed.file_html(fig, bokeh.resources.CDN)
 
     def _apply_style(self, series, style):
         """

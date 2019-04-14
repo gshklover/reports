@@ -198,11 +198,16 @@ class ComboChart(Chart):
 class DataSeries:
     """
     Single data series.
+    :param title: data series name
+    :param x: x values
+    :param y: y values
+    :param color: single color or color per point
     """
-    def __init__(self, title=None, x=None, y=None):
+    def __init__(self, title=None, x=None, y=None, color=None):
         self._title = title
         self._x = x
         self._y = y
+        self._color = color
 
     @property
     def title(self):
@@ -215,6 +220,10 @@ class DataSeries:
     @property
     def y(self):
         return self._y
+
+    @property
+    def color(self):
+        return self._color
 
 
 class CandlestickChart(Chart):
