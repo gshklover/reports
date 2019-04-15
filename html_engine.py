@@ -147,18 +147,19 @@ class HtmlEngine(Engine):
 
         colors = itertools.cycle(palette)
 
+        # render bars:
+        fig.extra_y_ranges['y2'] = bokeh.models.DataRange1d()
+        fig.add_layout(bokeh.models.LinearAxis(y_range_name='y2'), 'right')
+        bars = [fig.vbar(x=s.x, top=s.y, width=0.8, legend=s.title,
+                         y_range_name='y2', color=next(colors)) for s in obj.bars]
+        fig.extra_y_ranges['y2'].renderers = bars
+
         # render lines
         for s in obj.lines:
             color = next(colors)
             # TODO: sort line values
             fig.line(x=s.x, y=s.y, legend=s.title, color=color)
-            fig.circle(x=s.x, y=s.y, size=5, legend=s.title)
-
-        # render bars:
-        fig.extra_y_ranges['y2'] = bokeh.models.Range1d()
-        fig.add_layout(bokeh.models.LinearAxis(y_range_name='y2'), 'right')
-        for s in obj.bars:
-            fig.vbar(x=s.x, top=s.y, width=0.8, legend=s.title, y_range_name='y2', color=next(colors))
+            fig.circle(x=s.x, y=s.y, size=6, legend=s.title, color=color, fill_color='white')
 
         self._include_js = False
         return bokeh.embed.file_html(fig, bokeh.resources.CDN)
