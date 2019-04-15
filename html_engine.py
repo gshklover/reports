@@ -5,10 +5,9 @@ import bokeh.plotting
 import bokeh.resources
 import itertools
 from jinja2 import Environment, PackageLoader
-import numpy
 import pandas
 
-from .definitions import Engine, Report, Section, Box, Table, TextStyle, LineChart, ComboChart
+from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart
 
 
 class HtmlEngine(Engine):
@@ -48,6 +47,7 @@ class HtmlEngine(Engine):
             Report: self._render_report,
             Section: self._render_section,
             Box: self._render_box,
+            Grid: self._render_grid,
             Table: self._render_table,
             LineChart: self._render_line_chart,
             ComboChart: self._render_combo_chart,
@@ -78,6 +78,13 @@ class HtmlEngine(Engine):
         """
         box = self._env.get_template('box.html')
         return box.render(data=obj, **self._defaults)
+
+    def _render_grid(self, obj):
+        """
+        Render grid of objects
+        """
+        grid = self._env.get_template('grid.html')
+        return grid.render(data=obj, **self._defaults)
 
     def _render_table(self, obj):
         """
@@ -119,6 +126,7 @@ class HtmlEngine(Engine):
         """
         fig = bokeh.plotting.figure(
             toolbar_location=None,
+            tools="hover",
             title=obj.title,
             plot_width=500 if obj.size == LineChart.MEDIUM else 700,
             plot_height=350 if obj.size == LineChart.MEDIUM else 450,
@@ -140,6 +148,7 @@ class HtmlEngine(Engine):
         """
         fig = bokeh.plotting.figure(
             toolbar_location=None,
+            tools="hover",
             title=obj.title,
             plot_width=500 if obj.size == LineChart.MEDIUM else 700,
             plot_height=350 if obj.size == LineChart.MEDIUM else 450,
@@ -147,18 +156,21 @@ class HtmlEngine(Engine):
 
         colors = itertools.cycle(palette)
 
+        # render bars:
+        fig.extra_y_ranges['y2'] = bokeh.models.DataRange1d()
+        fig.add_layout(bokeh.models.LinearAxis(y_range_name='y2'), 'right')
+        bars = []
+        for s in obj.bars:
+            bars.append(fig.vbar(x=s.x, top=s.y, width=0.8, legend=s.title, y_range_name='y2',
+                                 color=s.color if s.color is not None else next(colors)))
+        fig.extra_y_ranges['y2'].renderers = bars
+
         # render lines
         for s in obj.lines:
             color = next(colors)
             # TODO: sort line values
             fig.line(x=s.x, y=s.y, legend=s.title, color=color)
-            fig.circle(x=s.x, y=s.y, size=5, legend=s.title)
-
-        # render bars:
-        fig.extra_y_ranges['y2'] = bokeh.models.Range1d()
-        fig.add_layout(bokeh.models.LinearAxis(y_range_name='y2'), 'right')
-        for s in obj.bars:
-            fig.vbar(x=s.x, top=s.y, width=0.8, legend=s.title, y_range_name='y2', color=next(colors))
+            fig.circle(x=s.x, y=s.y, size=6, legend=s.title, fill_color='white', color=color)
 
         self._include_js = False
         return bokeh.embed.file_html(fig, bokeh.resources.CDN)

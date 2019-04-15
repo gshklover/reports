@@ -32,6 +32,24 @@ class Box(Content):
         return self._orient
 
 
+class Grid(Content):
+    """
+    Displays a grid
+    """
+    def __init__(self, *content, columns=1):
+        super().__init__()
+        self._columns = columns
+        self._content = list(content)
+
+    @property
+    def content(self):
+        return self._content
+
+    @property
+    def columns(self):
+        return self._columns
+
+
 class Section(Box):
     """
     Report sub-section definition
