@@ -54,8 +54,8 @@ class Section(Box):
     """
     Report sub-section definition
     """
-    def __init__(self, title, *content):
-        super().__init__(*content)
+    def __init__(self, title, *content, orientation='vertical'):
+        super().__init__(*content, orientation=orientation)
         self._title = title
         self._level = 0
 
@@ -211,6 +211,14 @@ class ComboChart(Chart):
         super().__init__(title, size=size)
         self.bars = bars
         self.lines = lines
+
+
+class BarChart(Chart):
+    """
+    Displays data series as bars
+    """
+    def __init__(self, title, *series, size=Chart.MEDIUM):
+        super().__init__(title, *series, size=size)
 
 
 class DataSeries:
