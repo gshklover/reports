@@ -140,7 +140,7 @@ class HtmlEngine(Engine):
 
         # disable legend
         if len(obj.series) <= 1:
-            fig.legend = False
+            fig.legend[0].visible = False
 
         return bokeh.embed.file_html(fig, bokeh.resources.CDN)
 
@@ -177,7 +177,7 @@ class HtmlEngine(Engine):
 
         # disable legend
         if len(obj.series) <= 1:
-            fig.legend = False
+            fig.legend[0].visible = False
 
         return bokeh.embed.file_html(fig, bokeh.resources.CDN)
 
@@ -222,6 +222,10 @@ class HtmlEngine(Engine):
             # TODO: sort line values
             fig.line(x=[str(v) for v in s.x], y=s.y, legend=s.title, color=color)
             fig.circle(x=[str(v) for v in s.x], y=s.y, size=6, legend=s.title, fill_color='white', color=color)
+
+        # disable legend
+        if len(obj.lines) <= 1 and len(obj.bars) <= 1:
+            fig.legend[0].visible = False
 
         return bokeh.embed.file_html(fig, bokeh.resources.CDN)
 
