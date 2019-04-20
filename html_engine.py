@@ -1,6 +1,6 @@
 import bokeh.embed
 import bokeh.models
-from bokeh.palettes import Dark2_5 as palette
+from bokeh.palettes import Category10_10 as palette
 from bokeh.transform import dodge
 import bokeh.core.properties
 import bokeh.plotting
