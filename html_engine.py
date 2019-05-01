@@ -139,7 +139,7 @@ class HtmlEngine(Engine):
             fig.line(x=s.x, y=s.y, legend=s.title, color=next(colors))
 
         # disable legend
-        if len(obj.series) <= 1:
+        if len(obj.series) <= 1 and len(fig.legend):
             fig.legend[0].visible = False
 
         return bokeh.embed.file_html(fig, bokeh.resources.CDN)
