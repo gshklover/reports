@@ -2,8 +2,14 @@ class Engine:
     """
     Base engine definition
     """
+    _engines_ = {}
+
     def render(self, report):
         pass
+
+    @staticmethod
+    def get_engine(name):
+        return Engine._engines_[name]()
 
 
 class Content:
@@ -101,6 +107,12 @@ class Report(Section):
 
             if isinstance(o, Box):
                 todo += [(c, l) for c in o.content]
+
+    def _repr_html_(self):
+        """
+        Jupyter integration
+        """
+        return Engine.get_engine('html').render(self)
 
 
 class Table(Content):

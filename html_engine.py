@@ -63,7 +63,10 @@ class HtmlEngine(Engine):
         """
         Render top-level report object
         """
-        box = self._env.get_template('box.html')
+        if obj.level == 0:
+            box = self._env.get_template('box.html')
+        else:
+            box = self._env.get_template('section.html')
         return box.render(data=obj, **self._defaults)
 
     def _render_section(self, obj):
@@ -265,3 +268,6 @@ class HtmlEngine(Engine):
             result.append('color: {}'.format(text_style.color))
 
         return '; '.join(result)
+
+
+Engine._engines_['html'] = HtmlEngine
