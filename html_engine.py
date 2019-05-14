@@ -129,8 +129,8 @@ class HtmlEngine(Engine):
         :param obj: LineChart
         """
         fig = bokeh.plotting.figure(
-            toolbar_location=None,
-            tools="hover",
+            # toolbar_location=None,
+            # tools="hover",
             title=obj.title,
             plot_width=500 if obj.size == LineChart.MEDIUM else 700,
             plot_height=350 if obj.size == LineChart.MEDIUM else 450,
@@ -161,8 +161,8 @@ class HtmlEngine(Engine):
         source = bokeh.models.ColumnDataSource(data)
 
         fig = bokeh.plotting.figure(
-            toolbar_location=None,
-            tools="hover",
+            # toolbar_location=None,
+            # tools="hover",
             title=obj.title,
             x_range=data['x'].values,  # categorical values must be str()
             plot_width=500 if obj.size == LineChart.MEDIUM else 700,
@@ -199,8 +199,8 @@ class HtmlEngine(Engine):
                     x_range.append(v)
 
         fig = bokeh.plotting.figure(
-            toolbar_location=None,
-            tools="hover",
+            # toolbar_location=None,
+            # tools="hover",
             title=obj.title,
             x_range=x_range,
             plot_width=500 if obj.size == LineChart.MEDIUM else 700,
