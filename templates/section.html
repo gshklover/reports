@@ -1,4 +1,10 @@
 <div>
-    <h{{[data.level, 3]|min}}>{{ data.title }}</h{{[data.level, 3]|min}}>
+    <!-- Use font size directly when generating inline reports - otherwise it interferes with jupyterlab-toc -->
+    {% if is_inline %}
+        <font size="+{{4 - [data.level, 3]|min}}">{{ data.title }}</font>
+    {% else %}
+        <h{{[data.level, 3]|min}}>{{ data.title }}</h{{[data.level, 3]|min}}>
+    {% endif %}
+
     {% include "box.html" %}
 </div>

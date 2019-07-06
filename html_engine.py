@@ -16,10 +16,11 @@ class HtmlEngine(Engine):
     """
     HTML report rendering using jinja2 templates
     """
-    def __init__(self, template='report.html'):
+    def __init__(self, template='report.html', inline=True):
         self._env = None
         self._defaults = {
-            'render': self._render
+            'render': self._render,
+            'is_inline': inline
         }
         self._template = template
 
