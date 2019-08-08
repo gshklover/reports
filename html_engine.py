@@ -146,7 +146,7 @@ class HtmlEngine(Engine):
         if len(obj.series) <= 1 and len(fig.legend):
             fig.legend[0].visible = False
         else:
-            if obj.series[0].y[-1] > obj.series[0].y[0]:
+            if len(obj.series) and len(obj.series[0].y) and obj.series[0].y[-1] > obj.series[0].y[0]:
                 fig.legend.location = "bottom_right"
 
         return bokeh.embed.file_html(fig, bokeh.resources.CDN)
