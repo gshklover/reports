@@ -7,9 +7,18 @@ import bokeh.plotting
 import bokeh.resources
 import itertools
 from jinja2 import Environment, PackageLoader
+import numbers
 import pandas
 
 from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart
+
+
+CHART_SIZE = {
+    LineChart.SMALL: (200, 200),
+    LineChart.MEDIUM: (500, 350),
+    LineChart.LARGE: (700, 450),
+    LineChart.WIDE: (1000, 350)
+}
 
 
 class HtmlEngine(Engine):
@@ -129,18 +138,29 @@ class HtmlEngine(Engine):
         Render a line chart using bokeh
         :param obj: LineChart
         """
+        # non-numeric X axis:
+        if not isinstance(obj.series[0].x[0], numbers.Number):
+            x_range = set()
+            for s in obj.series:
+                x_range |= set(s.x)
+
+            x_range = bokeh.models.FactorRange(*sorted(x_range))
+        else:
+            x_range = None
+
         fig = bokeh.plotting.figure(
             # toolbar_location=None,
             # tools="hover",
             title=obj.title,
-            plot_width=500 if obj.size == LineChart.MEDIUM else 700,
-            plot_height=350 if obj.size == LineChart.MEDIUM else 450,
+            plot_width=CHART_SIZE[obj.size][0],
+            plot_height=CHART_SIZE[obj.size][1],
+            x_range=x_range
         )
 
         colors = itertools.cycle(palette)
 
         for s in obj.series:
-            fig.line(x=s.x, y=s.y, legend=s.title, color=next(colors))
+            fig.line(x=s.x, y=s.y, legend_label=s.title, color=next(colors))
 
         # disable legend
         if len(obj.series) <= 1 and len(fig.legend):
@@ -169,8 +189,8 @@ class HtmlEngine(Engine):
             # tools="hover",
             title=obj.title,
             x_range=data['x'].values,  # categorical values must be str()
-            plot_width=500 if obj.size == LineChart.MEDIUM else 700,
-            plot_height=350 if obj.size == LineChart.MEDIUM else 450,
+            plot_width=CHART_SIZE[obj.size][0],
+            plot_height=CHART_SIZE[obj.size][1],
         )
 
         colors = itertools.cycle(palette)
@@ -179,7 +199,7 @@ class HtmlEngine(Engine):
         for idx, s in enumerate(obj.series):
             fig.vbar(x=dodge('x', - width/2 + idx * width, range=fig.x_range),
                      top='s' + str(idx), source=source,
-                     legend=bokeh.core.properties.value(s.title), width=width * 0.9,
+                     legend_label=bokeh.core.properties.value(s.title), width=width * 0.9,
                      color=s.color if s.color is not None else next(colors))
 
         # disable legend
@@ -207,8 +227,8 @@ class HtmlEngine(Engine):
             # tools="hover",
             title=obj.title,
             x_range=x_range,
-            plot_width=500 if obj.size == LineChart.MEDIUM else 700,
-            plot_height=350 if obj.size == LineChart.MEDIUM else 450,
+            plot_width=CHART_SIZE[obj.size][0],
+            plot_height=CHART_SIZE[obj.size][1],
         )
 
         colors = itertools.cycle(palette)
@@ -219,7 +239,7 @@ class HtmlEngine(Engine):
 
         bars = []
         for s in obj.bars:
-            bars.append(fig.vbar(x=[str(v) for v in s.x], top=s.y, width=0.8, legend=s.title, y_range_name='y2',
+            bars.append(fig.vbar(x=[str(v) for v in s.x], top=s.y, width=0.8, legend_label=s.title, y_range_name='y2',
                                  color=s.color if s.color is not None else next(colors)))
         fig.extra_y_ranges['y2'].renderers = bars
 
@@ -227,8 +247,8 @@ class HtmlEngine(Engine):
         for s in obj.lines:
             color = next(colors)
             # TODO: sort line values
-            fig.line(x=[str(v) for v in s.x], y=s.y, legend=s.title, color=color)
-            fig.circle(x=[str(v) for v in s.x], y=s.y, size=6, legend=s.title, fill_color='white', color=color)
+            fig.line(x=[str(v) for v in s.x], y=s.y, legend_label=s.title, color=color)
+            fig.circle(x=[str(v) for v in s.x], y=s.y, size=6, legend_lebel=s.title, fill_color='white', color=color)
 
         # disable legend
         if len(obj.lines) <= 1 and len(obj.bars) <= 1:

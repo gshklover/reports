@@ -187,6 +187,7 @@ class Chart(Content):
     LARGE = 'large'  # chart size hints
     MEDIUM = 'medium'
     SMALL = 'small'
+    WIDE = 'wide'
     AUTO = 'auto'  # size according to the container
 
     def __init__(self, title=None, *series, size=MEDIUM):
@@ -209,7 +210,7 @@ class Chart(Content):
 
 class LineChart(Chart):
     """
-    Simple line chart
+    Simple line chart (scatter chart)
     """
     def __init__(self, title, *series, size=Chart.MEDIUM):
         super().__init__(title, *series, size=size)
