@@ -160,7 +160,7 @@ class HtmlEngine(Engine):
         colors = itertools.cycle(palette)
 
         for s in obj.series:
-            fig.line(x=s.x, y=s.y, legend_label=s.title, color=next(colors))
+            fig.line(x=s.x, y=s.y, **({'legend_label': s.title} if s.title else {}), color=next(colors))
 
         # disable legend
         if len(obj.series) <= 1 and len(fig.legend):
