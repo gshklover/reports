@@ -248,7 +248,7 @@ class HtmlEngine(Engine):
             color = next(colors)
             # TODO: sort line values
             fig.line(x=[str(v) for v in s.x], y=s.y, legend_label=s.title, color=color)
-            fig.circle(x=[str(v) for v in s.x], y=s.y, size=6, legend_lebel=s.title, fill_color='white', color=color)
+            fig.circle(x=[str(v) for v in s.x], y=s.y, size=6, fill_color='white', color=color)
 
         # disable legend
         if len(obj.lines) <= 1 and len(obj.bars) <= 1:
