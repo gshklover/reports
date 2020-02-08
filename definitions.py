@@ -24,10 +24,11 @@ class Box(Content):
     """
     Content group. Can group content vertically / horizontally.
     """
-    def __init__(self, *content, orientation="vertical"):
+    def __init__(self, *content, orientation="vertical", spacing=0):
         super().__init__()
         self._content = list(content)
         self._orient = orientation
+        self._spacing = spacing
 
     @property
     def content(self):
