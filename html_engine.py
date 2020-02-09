@@ -139,7 +139,7 @@ class HtmlEngine(Engine):
         :param obj: LineChart
         """
         # non-numeric X axis:
-        if not isinstance(obj.series[0].x[0], numbers.Number):
+        if len(obj.series) and len(obj.series[0].x) and not isinstance(obj.series[0].x[0], numbers.Number):
             x_range = set()
             for s in obj.series:
                 x_range |= set(s.x)
