@@ -295,3 +295,19 @@ class HtmlEngine(Engine):
 
 
 Engine._engines_['html'] = HtmlEngine
+
+
+def save_report(report, file):
+    """
+    Save report as HTML file
+
+    :param report:
+    :param file:
+    :return:
+    """
+    eng = HtmlEngine()
+
+    with open(file, 'w') as stream:
+        stream.write(eng.render(report))
+
+    return report
