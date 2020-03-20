@@ -199,7 +199,7 @@ class HtmlEngine(Engine):
         for idx, s in enumerate(obj.series):
             fig.vbar(x=dodge('x', - width/2 + idx * width, range=fig.x_range),
                      top='s' + str(idx), source=source,
-                     legend_label=bokeh.core.properties.value(s.title), width=width * 0.9,
+                     legend_label=s.title, width=width * 0.9,
                      color=s.color if s.color is not None else next(colors))
 
         # disable legend
