@@ -191,30 +191,20 @@ class Chart(Content):
     WIDE = 'wide'
     AUTO = 'auto'  # size according to the container
 
-    def __init__(self, title=None, *series, size=MEDIUM):
-        self._title = title
-        self._series = list(series)
-        self._size = size
-
-    @property
-    def title(self):
-        return self._title
-
-    @property
-    def series(self):
-        return self._series
-
-    @property
-    def size(self):
-        return self._size
+    def __init__(self, title=None, *series, size=MEDIUM, x_axis_title=None, y_axis_title=None):
+        self.title = title
+        self.series = list(series)
+        self.size = size
+        self.x_axis_title = x_axis_title
+        self.y_axis_title = y_axis_title
 
 
 class LineChart(Chart):
     """
     Simple line chart (scatter chart)
     """
-    def __init__(self, title, *series, size=Chart.MEDIUM):
-        super().__init__(title, *series, size=size)
+    def __init__(self, title, *series, size=Chart.MEDIUM, x_axis_title=None, y_axis_title=None):
+        super().__init__(title, *series, size=size, x_axis_title=x_axis_title, y_axis_title=y_axis_title)
 
 
 class ComboChart(Chart):
@@ -243,11 +233,13 @@ class DataSeries:
     :param y: y values
     :param color: single color or color per point
     """
-    def __init__(self, title=None, x=None, y=None, color=None):
+    def __init__(self, title=None, x=None, y=None, color=None, line=True, markers=False):
         self._title = title
         self._x = x
         self._y = y
         self._color = color
+        self.line = line
+        self.markers = markers
 
     @property
     def title(self):

@@ -11,6 +11,8 @@ import numbers
 import pandas
 
 from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart
+# TODO: move the function definition into reports
+from pyutils.bokehutils import bars
 
 
 CHART_SIZE = {
@@ -136,6 +138,7 @@ class HtmlEngine(Engine):
     def _render_line_chart(self, obj):
         """
         Render a line chart using bokeh
+
         :param obj: LineChart
         """
         # non-numeric X axis:
@@ -160,7 +163,20 @@ class HtmlEngine(Engine):
         colors = itertools.cycle(palette)
 
         for s in obj.series:
-            fig.line(x=s.x, y=s.y, **({'legend_label': s.title} if s.title else {}), color=next(colors))
+            color = next(colors) if s.color is None else s.color
+            extra = {'legend_label': s.title} if s.title else {}
+            assert s.line or s.markers
+
+            if s.line:
+                fig.line(x=s.x, y=s.y, **extra, color=color)
+
+            if s.markers:
+                fig.circle(x=s.x, y=s.y, color=color)
+
+        if obj.x_axis_title:
+            fig.xaxis.axis_label = obj.x_axis_title
+        if obj.y_axis_title:
+            fig.yaxis.axis_label = obj.y_axis_title
 
         # disable legend
         if len(obj.series) <= 1 and len(fig.legend):
@@ -195,12 +211,14 @@ class HtmlEngine(Engine):
 
         colors = itertools.cycle(palette)
 
-        width = 0.8/len(obj.series)
         for idx, s in enumerate(obj.series):
-            fig.vbar(x=dodge('x', - width/2 + idx * width, range=fig.x_range),
-                     top='s' + str(idx), source=source,
-                     legend_label=s.title, width=width * 0.9,
-                     color=s.color if s.color is not None else next(colors))
+            bars(fig, x='x', y='s' + str(idx), num_total=len(obj.series), this_index=idx,
+                 source=source, legend_label=s.title,
+                 color=s.color if s.color is not None else next(colors))
+            # fig.vbar(x=dodge('x', - width/2 + idx * width, range=fig.x_range),
+            #          top='s' + str(idx), source=source,
+            #          legend_label=s.title, width=width * 0.9,
+            #          color=s.color if s.color is not None else next(colors))
 
         # disable legend
         if len(obj.series) <= 1:
