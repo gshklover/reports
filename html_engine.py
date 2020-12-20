@@ -1,7 +1,7 @@
 import bokeh.embed
 import bokeh.models
 from bokeh.palettes import Category10_10 as palette
-from bokeh.transform import dodge
+# from bokeh.transform import dodge
 import bokeh.core.properties
 import bokeh.plotting
 import bokeh.resources
@@ -10,7 +10,7 @@ from jinja2 import Environment, PackageLoader
 import numbers
 import pandas
 
-from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart
+from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart, SlopeAnnotation
 # TODO: move the function definition into reports
 from pyutils.bokehutils import bars
 
@@ -159,6 +159,9 @@ class HtmlEngine(Engine):
             plot_height=CHART_SIZE[obj.size][1],
             x_range=x_range
         )
+
+        if obj.annotations:
+            self._render_annotations(fig, obj.annotations)
 
         colors = itertools.cycle(palette)
 
@@ -310,6 +313,22 @@ class HtmlEngine(Engine):
             result.append('color: {}'.format(text_style.color))
 
         return '; '.join(result)
+
+    def _render_annotations(self, figure, annotations):
+        """
+        Render annotation on the specified figure
+
+        :param figure: bokeh.Figure
+        :param annotations: list of chart annotations
+        """
+        for a in annotations:
+            if isinstance(a, SlopeAnnotation):
+                figure.add_layout(bokeh.models.Slope(
+                    gradient=a.slope, y_intercept=a.intercept,
+                    line_color=a.color or 'grey', line_dash=a.dash or [], line_width=a.line_width or 1
+                ))
+            else:
+                raise NotImplementedError()
 
 
 Engine._engines_['html'] = HtmlEngine

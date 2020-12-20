@@ -191,20 +191,23 @@ class Chart(Content):
     WIDE = 'wide'
     AUTO = 'auto'  # size according to the container
 
-    def __init__(self, title=None, *series, size=MEDIUM, x_axis_title=None, y_axis_title=None):
+    def __init__(self, title=None, *series, size=MEDIUM, x_axis_title=None, y_axis_title=None, annotations=None):
+        super().__init__()
         self.title = title
         self.series = list(series)
         self.size = size
         self.x_axis_title = x_axis_title
         self.y_axis_title = y_axis_title
+        self.annotations = annotations
 
 
 class LineChart(Chart):
     """
     Simple line chart (scatter chart)
     """
-    def __init__(self, title, *series, size=Chart.MEDIUM, x_axis_title=None, y_axis_title=None):
-        super().__init__(title, *series, size=size, x_axis_title=x_axis_title, y_axis_title=y_axis_title)
+    def __init__(self, title, *series, size=Chart.MEDIUM, x_axis_title=None, y_axis_title=None, annotations=None):
+        super().__init__(title, *series, size=size, x_axis_title=x_axis_title, y_axis_title=y_axis_title,
+                         annotations=annotations)
 
 
 class ComboChart(Chart):
@@ -228,6 +231,7 @@ class BarChart(Chart):
 class DataSeries:
     """
     Single data series.
+
     :param title: data series name
     :param x: x values
     :param y: y values
@@ -264,3 +268,26 @@ class CandlestickChart(Chart):
     """
     def __init__(self, title, series):
         super().__init__(title)
+
+
+class Annotation:
+    """
+    Base class for chart annotations
+    """
+    pass
+
+
+class SlopeAnnotation(Annotation):
+    """
+    Slopes are rendered on the chart without affecting data ranges
+
+    Renders line y(x) = slope * x + intercept
+    """
+    def __init__(self, intercept=0, slope=0, color=None, dash=None, line_width=None):
+        super().__init__()
+        self.intercept = intercept
+        self.slope = slope
+        self.intercept = intercept
+        self.color = color
+        self.dash = dash
+        self.line_width = line_width
