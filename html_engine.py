@@ -155,8 +155,8 @@ class HtmlEngine(Engine):
             # toolbar_location=None,
             # tools="hover",
             title=obj.title,
-            plot_width=CHART_SIZE[obj.size][0],
-            plot_height=CHART_SIZE[obj.size][1],
+            width=CHART_SIZE[obj.size][0],
+            height=CHART_SIZE[obj.size][1],
             x_range=x_range
         )
 
@@ -208,8 +208,8 @@ class HtmlEngine(Engine):
             # tools="hover",
             title=obj.title,
             x_range=data['x'].values,  # categorical values must be str()
-            plot_width=CHART_SIZE[obj.size][0],
-            plot_height=CHART_SIZE[obj.size][1],
+            width=CHART_SIZE[obj.size][0],
+            height=CHART_SIZE[obj.size][1],
         )
 
         colors = itertools.cycle(palette)
@@ -248,8 +248,8 @@ class HtmlEngine(Engine):
             # tools="hover",
             title=obj.title,
             x_range=x_range,
-            plot_width=CHART_SIZE[obj.size][0],
-            plot_height=CHART_SIZE[obj.size][1],
+            width=CHART_SIZE[obj.size][0],
+            height=CHART_SIZE[obj.size][1],
         )
 
         colors = itertools.cycle(palette)
