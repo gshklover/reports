@@ -133,7 +133,7 @@ class HtmlEngine(Engine):
                 d = obj.column_style
                 style = style.apply(lambda x: self._apply_style(x, d.get(x.name, None)), axis=0)
 
-        return style.render()
+        return style.to_html()
 
     def _render_line_chart(self, obj):
         """
@@ -142,14 +142,13 @@ class HtmlEngine(Engine):
         :param obj: LineChart
         """
         # non-numeric X axis:
+        extra = {}
         if len(obj.series) and len(obj.series[0].x) and not isinstance(obj.series[0].x[0], numbers.Number):
             x_range = set()
             for s in obj.series:
                 x_range |= set(s.x)
 
-            x_range = bokeh.models.FactorRange(*sorted(x_range))
-        else:
-            x_range = None
+            extra['x_range'] = bokeh.models.FactorRange(*sorted(x_range))
 
         fig = bokeh.plotting.figure(
             # toolbar_location=None,
@@ -157,7 +156,7 @@ class HtmlEngine(Engine):
             title=obj.title,
             width=CHART_SIZE[obj.size][0],
             height=CHART_SIZE[obj.size][1],
-            x_range=x_range
+            **extra
         )
 
         if obj.annotations:
