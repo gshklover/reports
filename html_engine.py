@@ -1,5 +1,6 @@
 import bokeh.embed
 import bokeh.models
+import numpy
 from bokeh.palettes import Category10_10 as palette
 # from bokeh.transform import dodge
 import bokeh.core.properties
@@ -10,7 +11,7 @@ from jinja2 import Environment, PackageLoader
 import numbers
 import pandas
 
-from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart, SlopeAnnotation
+from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart, SlopeAnnotation, OHLCChart
 # TODO: move the function definition into reports
 from pyutils.bokehutils import bars
 
@@ -64,6 +65,7 @@ class HtmlEngine(Engine):
             BarChart: self._render_bar_chart,
             LineChart: self._render_line_chart,
             ComboChart: self._render_combo_chart,
+            OHLCChart: self._render_ohlc_chart
         }
 
         if type(obj) not in obj_map:
@@ -225,6 +227,82 @@ class HtmlEngine(Engine):
         # disable legend
         if len(obj.series) <= 1:
             fig.legend[0].visible = False
+
+        return bokeh.embed.file_html(fig, bokeh.resources.CDN)
+
+    def _render_ohlc_chart(self, obj: OHLCChart):
+        """
+        Render OHLC chart to the report
+
+        :param obj:
+        :return:
+        """
+        data = obj.data
+        green = data['close'] >= data['open']
+        colors = numpy.array(['#FF0000'] * len(data.index))
+        colors[green] = '#00AA00'
+        index = numpy.arange(len(data.index))
+
+        fig = bokeh.plotting.figure(
+            title=obj.title,
+            width=CHART_SIZE[obj.size][0],
+            height=CHART_SIZE[obj.size][1],
+            tools="pan,box_zoom,xwheel_zoom,reset,hover,crosshair"
+        )
+
+        width = 0.6
+        fig.segment(index, data.high, index, data.low, color="black")
+        source = bokeh.models.ColumnDataSource({
+            'x': index,
+            'width': [width] * index.shape[0],
+            'top': numpy.maximum(data['open'].values, data['close'].values),
+            'bottom': numpy.minimum(data['open'].values, data['close'].values),
+            'color': colors,
+            # for tooltip
+            'time': list(map(str, data.index.values)),
+            'open': data['open'].values,
+            'high': data['high'].values,
+            'low': data['low'].values,
+            'close': data['close'].values
+        })
+
+        bars = fig.vbar(x='x', width='width', top='top', bottom='bottom', source=source,
+                        fill_color='color', line_color="black")
+
+        # modify hover tool:
+        for t in fig.tools:
+            if isinstance(t, bokeh.models.HoverTool):
+                t.anchor = 'bottom_center'
+                t.attachment = 'below'
+                t.renderers = [bars]
+                break
+
+        # time axis formatter
+        formatter = """
+            var idx = Math.trunc(tick)
+            if (idx < 0 || idx != tick || idx >= labels.length) return ""
+            return labels[idx]
+        """
+
+        fig.xaxis.formatter = bokeh.models.CustomJSTickFormatter(code=formatter, args={
+            'labels': [str(v) for v in data.index]
+        })
+
+        if 'volume' in data.columns and numpy.any(data['volume'].values):
+            # Adding extra Y range seems to affect the default range calculation (implemented in DataRange1d)
+            # We override the default Y range with explicit calculation.
+            # This may affect the plot if extra rendering is performed later.
+            # One way to fix this is to explicitly assign relevant subset of renderers to DataRange1d.
+            default_top = data['high'].max()
+            default_bot = data['low'].min()
+            fig.y_range = bokeh.models.Range1d(1.05 * default_bot - 0.05 * default_top,
+                                               1.05 * default_top - 0.05 * default_bot)
+
+            volume = data['volume'].values
+            fig.extra_y_ranges = {"volume": bokeh.models.Range1d(start=0, end=volume.max() * 5)}
+            fig.add_layout(bokeh.models.LinearAxis(y_range_name="volume"), 'right')
+            fig.vbar(x=index, width=0.8, bottom=numpy.zeros(len(index)), top=volume,
+                     fill_color=colors, y_range_name='volume', alpha=0.5, level='underlay')
 
         return bokeh.embed.file_html(fig, bokeh.resources.CDN)
 

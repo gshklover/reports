@@ -1,3 +1,6 @@
+import pandas
+
+
 class Engine:
     """
     Base engine definition
@@ -208,6 +211,20 @@ class LineChart(Chart):
     def __init__(self, title, *series, size=Chart.MEDIUM, x_axis_title=None, y_axis_title=None, annotations=None):
         super().__init__(title, *series, size=size, x_axis_title=x_axis_title, y_axis_title=y_axis_title,
                          annotations=annotations)
+
+
+class OHLCChart(Chart):
+    """
+    OHLC (financial data) chart
+    """
+    def __init__(self, title, data: pandas.DataFrame, **kwargs):
+        """
+
+        :param title:
+        :param data:
+        """
+        super().__init__(title=title, **kwargs)
+        self.data = data
 
 
 class ComboChart(Chart):
