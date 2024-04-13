@@ -11,7 +11,7 @@ from jinja2 import Environment, PackageLoader
 import numbers
 import pandas
 
-from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart, SlopeAnnotation, OHLCChart
+from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart, SlopeAnnotation, CandlestickChart, ChartGroup, Content
 # TODO: move the function definition into reports
 from pyutils.bokehutils import bars
 
@@ -36,9 +36,10 @@ class HtmlEngine(Engine):
         }
         self._template = template
 
-    def render(self, report):
+    def render(self, report: Report) -> str:
         """
         Render report into HTML string
+
         :param report: Report object
         """
         self._env = Environment(
@@ -52,7 +53,7 @@ class HtmlEngine(Engine):
             data=report, **self._defaults
         )
 
-    def _render(self, obj):
+    def _render(self, obj: Content) -> str:
         """
         Render a content object
         """
@@ -65,15 +66,16 @@ class HtmlEngine(Engine):
             BarChart: self._render_bar_chart,
             LineChart: self._render_line_chart,
             ComboChart: self._render_combo_chart,
-            OHLCChart: self._render_ohlc_chart
+            CandlestickChart: self._render_ohlc_chart,
+            ChartGroup: self._render_chart_group
         }
 
         if type(obj) not in obj_map:
-            raise(Exception("Unknown content type: " + str(type(obj))))
+            raise Exception("Unknown content type: " + str(type(obj)))
 
         return obj_map[type(obj)](obj)
 
-    def _render_report(self, obj):
+    def _render_report(self, obj: Report) -> str:
         """
         Render top-level report object
         """
@@ -83,32 +85,38 @@ class HtmlEngine(Engine):
             box = self._env.get_template('section.html')
         return box.render(data=obj, **self._defaults)
 
-    def _render_section(self, obj):
+    def _render_section(self, obj: Section) -> str:
         """
-        Render a sub-section
+        Render a subsection
         """
         box = self._env.get_template('section.html')
         return box.render(data=obj, **self._defaults)
 
-    def _render_box(self, obj):
+    def _render_box(self, obj: Box) -> str:
         """
         Render a horizontal / vertical group of content
         """
         box = self._env.get_template('box.html')
         return box.render(data=obj, **self._defaults)
 
-    def _render_grid(self, obj):
+    def _render_grid(self, obj: Grid) -> str:
         """
         Render grid of objects
         """
         grid = self._env.get_template('grid.html')
         return grid.render(data=obj, **self._defaults)
 
-    def _render_table(self, obj):
+    def _render_interactive_table(self, obj: Table) -> str:
+        """
+        Render interactive table using jspreadsheets-ce package.
+        """
+        return ''
+
+    def _render_table(self, obj: Table) -> str:
         """
         Render pandas table
         """
-        style = obj.data.style.set_table_attributes('class="table-sm table-striped"')
+        style = obj.data.style.set_table_attributes('class="table table-bordered table-sm table-responsive table-striped"')
         table_styles = []
         if not obj.header:
             table_styles.append({'selector': '.col_heading', 'props': [('display', 'none')]})
@@ -131,13 +139,13 @@ class HtmlEngine(Engine):
                 style = style.apply(lambda x: self._apply_style(x, obj.column_style), axis=0)
             else:
                 if not isinstance(obj.column_style, dict):
-                    raise(Exception("Column style should be a callback or a dictionary"))
+                    raise Exception("Column style should be a callback or a dictionary")
                 d = obj.column_style
                 style = style.apply(lambda x: self._apply_style(x, d.get(x.name, None)), axis=0)
 
         return style.to_html()
 
-    def _render_line_chart(self, obj):
+    def _render_line_chart(self, obj: LineChart) -> str:
         """
         Render a line chart using bokeh
 
@@ -175,7 +183,7 @@ class HtmlEngine(Engine):
                 fig.line(x=s.x, y=s.y, **extra, color=color)
 
             if s.markers:
-                fig.circle(x=s.x, y=s.y, color=color)
+                fig.circle(x=s.x, y=s.y, color=color, **(extra if not s.line else {}))
 
         if obj.x_axis_title:
             fig.xaxis.axis_label = obj.x_axis_title
@@ -191,9 +199,10 @@ class HtmlEngine(Engine):
 
         return bokeh.embed.file_html(fig, bokeh.resources.CDN)
 
-    def _render_bar_chart(self, obj):
+    def _render_bar_chart(self, obj: BarChart):
         """
         Render a bar chart using bokeh
+
         :param obj: BarChart
         """
         data = pandas.DataFrame({
@@ -230,7 +239,7 @@ class HtmlEngine(Engine):
 
         return bokeh.embed.file_html(fig, bokeh.resources.CDN)
 
-    def _render_ohlc_chart(self, obj: OHLCChart):
+    def _render_ohlc_chart(self, obj: CandlestickChart):
         """
         Render OHLC chart to the report
 
@@ -306,10 +315,11 @@ class HtmlEngine(Engine):
 
         return bokeh.embed.file_html(fig, bokeh.resources.CDN)
 
-    def _render_combo_chart(self, obj):
+    def _render_combo_chart(self, obj: ComboChart) -> str:
         """
         Render a combination of lines and bars on the same chart.
         The X axis is assumed to be categorical.
+
         :param obj: ComboChart
         :return: HTML
         """
@@ -353,6 +363,12 @@ class HtmlEngine(Engine):
             fig.legend[0].visible = False
 
         return bokeh.embed.file_html(fig, bokeh.resources.CDN)
+
+    def _render_chart_group(self, group: ChartGroup) -> str:
+        """
+        Renders a group of axis-aligned charts
+        """
+        pass
 
     def _apply_style(self, series, style):
         """

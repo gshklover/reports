@@ -1,3 +1,6 @@
+import dataclasses
+from typing import Sequence
+
 import pandas
 
 
@@ -15,80 +18,59 @@ class Engine:
         return Engine._engines_[name]()
 
 
+@dataclasses.dataclass
 class Content:
     """
     Base class for abstract content item.
     """
-    def __init__(self):
-        pass
+    pass
 
 
+@dataclasses.dataclass
 class Box(Content):
     """
     Content group. Can group content vertically / horizontally.
     """
-    def __init__(self, *content, orientation="vertical", spacing=0):
+    content: Sequence[Content] = None
+    orientation: str = "vertical"
+    spacing: int = 0
+
+    def __init__(self, *content, orientation: str = "vertical", spacing=0):
         super().__init__()
-        self._content = list(content)
-        self._orient = orientation
-        self._spacing = spacing
-
-    @property
-    def content(self):
-        return self._content
-
-    @property
-    def orientation(self):
-        return self._orient
+        self.content = list(content)
+        self.orientation = orientation
+        self.spacing = spacing
 
 
+@dataclasses.dataclass
 class Grid(Content):
     """
     Displays a grid
     """
+    content: Sequence[Content] = None
+    columns: int = 1
+
     def __init__(self, *content, columns=1):
         super().__init__()
-        self._columns = columns
-        self._content = list(content)
-
-    @property
-    def content(self):
-        return self._content
-
-    @property
-    def columns(self):
-        return self._columns
+        self.columns = columns
+        self.content = list(content)
 
 
+@dataclasses.dataclass
 class Section(Box):
     """
-    Report sub-section definition
+    Report subsection definition
     """
+    title: str = None
+    level: int = 0
+
     def __init__(self, title, *content, orientation='vertical'):
         super().__init__(*content, orientation=orientation)
-        self._title = title
-        self._level = 0
-
-    @property
-    def title(self):
-        return self._title
-
-    @title.setter
-    def title(self, val):
-        self._title = val
-
-    @property
-    def level(self):
-        """
-        Used internally when rendering
-        """
-        return self._level
-
-    @level.setter
-    def level(self, val):
-        self._level = val
+        self.title = title
+        self.level = 0
 
 
+@dataclasses.dataclass
 class Report(Section):
     """
     Top-level report object for abstract report definition
@@ -119,71 +101,64 @@ class Report(Section):
         return Engine.get_engine('html').render(self)
 
 
+@dataclasses.dataclass
 class Table(Content):
     """
     Rendering for a table. Data should be pandas DataFrame
+
     :param data: pandas.DataFrame with data to render
     :param title: table title (optional)
     :param column_style: callback function to return styles per column
+    :param interactive: if True, render interactive table (scrollable, selectable)
     """
-    def __init__(self, data, title=None, index=False, header=True, column_style=None):
-        super().__init__()
-        self._data = data
-        self._title = title
-        self._index = index
-        self._header = header
-        self._column_style = column_style
-
-    @property
-    def data(self):
-        return self._data
-
-    @property
-    def title(self):
-        return self._title
-
-    @property
-    def index(self):
-        return self._index
-
-    @property
-    def header(self):
-        return self._header
-
-    @property
-    def column_style(self):
-        return self._column_style
+    data: pandas.DataFrame = None
+    title: str = None
+    index: bool = False
+    header: bool = True
+    column_style: str = None
+    interactive: bool = True
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
 class TextStyle:
     """
     Text styling for tables. All values are in CSS units.
     """
     BOLD = 'bold'
 
-    def __init__(self, size=None, weight=None, align=None, color=None):
-        self._size = size
-        self._weight = weight
-        self._align = align
-        self._color = color
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def weight(self):
-        return self._weight
-
-    @property
-    def align(self):
-        return self._align
-
-    @property
-    def color(self):
-        return self._color
+    size: str = None
+    weight: str = None
+    align: str = None
+    color: str = None
 
 
+@dataclasses.dataclass(slots=True)
+class DataSeries:
+    """
+    Single data series.
+
+    :param title: data series name
+    :param x: x values
+    :param y: y values
+    :param color: single color or color per point
+    """
+    title: str = None
+    x: Sequence[float | str] = None
+    y: Sequence[float] = None
+    color: str = None
+    line: bool = True
+    markers: bool = False
+
+
+@dataclasses.dataclass
+class Annotation:
+    """
+    Base class for chart annotations
+    """
+    pass
+
+
+@dataclasses.dataclass
 class Chart(Content):
     """
     Base chart class
@@ -194,31 +169,49 @@ class Chart(Content):
     WIDE = 'wide'
     AUTO = 'auto'  # size according to the container
 
-    def __init__(self, title=None, *series, size=MEDIUM, x_axis_title=None, y_axis_title=None, annotations=None):
+    title: str = None
+    series: Sequence[DataSeries] = None
+    size: str = MEDIUM
+    annotations: Sequence[Annotation] = None
+
+    def __init__(self, title, *series, size=MEDIUM, annotations=None):
         super().__init__()
         self.title = title
         self.series = list(series)
         self.size = size
-        self.x_axis_title = x_axis_title
-        self.y_axis_title = y_axis_title
         self.annotations = annotations
 
 
-class LineChart(Chart):
+@dataclasses.dataclass(slots=True)
+class XYChart(Chart):
+    """
+    Base class for charts with X and Y axis
+    """
+    x_axis_title: str = None
+    y_axis_title: str = None
+
+    def __init__(self, title, *series, size=Chart.MEDIUM, x_axis_title=None, y_axis_title=None, annotations=None):
+        super(XYChart, self).__init__(title, *series, size=size, annotations=annotations)
+        self.x_axis_title = x_axis_title
+        self.y_axis_title = y_axis_title
+
+
+class LineChart(XYChart):
     """
     Simple line chart (scatter chart)
     """
-    def __init__(self, title, *series, size=Chart.MEDIUM, x_axis_title=None, y_axis_title=None, annotations=None):
-        super().__init__(title, *series, size=size, x_axis_title=x_axis_title, y_axis_title=y_axis_title,
-                         annotations=annotations)
+    pass
 
 
-class OHLCChart(Chart):
+@dataclasses.dataclass
+class CandlestickChart(XYChart):
     """
-    OHLC (financial data) chart
+    OHLC (open, high, low, close) chart
     """
+
     def __init__(self, title, data: pandas.DataFrame, **kwargs):
         """
+        Initialize with specified data
 
         :param title:
         :param data:
@@ -227,71 +220,29 @@ class OHLCChart(Chart):
         self.data = data
 
 
-class ComboChart(Chart):
+@dataclasses.dataclass(slots=True)
+class ComboChart(XYChart):
     """
     Render a combined chart with bar and line series
     """
-    def __init__(self, title, bars=[], lines=[], size=Chart.MEDIUM):
-        super().__init__(title, size=size)
-        self.bars = bars
-        self.lines = lines
+    bars: Sequence[DataSeries] = dataclasses.field(default_factory=list)
+    lines: Sequence[DataSeries] = dataclasses.field(default_factory=list)
 
 
-class BarChart(Chart):
+@dataclasses.dataclass(slots=True)
+class BarChart(XYChart):
     """
     Displays data series as bars
     """
-    def __init__(self, title, *series, size=Chart.MEDIUM):
-        super().__init__(title, *series, size=size)
-
-
-class DataSeries:
-    """
-    Single data series.
-
-    :param title: data series name
-    :param x: x values
-    :param y: y values
-    :param color: single color or color per point
-    """
-    def __init__(self, title=None, x=None, y=None, color=None, line=True, markers=False):
-        self._title = title
-        self._x = x
-        self._y = y
-        self._color = color
-        self.line = line
-        self.markers = markers
-
-    @property
-    def title(self):
-        return self._title
-
-    @property
-    def x(self):
-        return self._x
-
-    @property
-    def y(self):
-        return self._y
-
-    @property
-    def color(self):
-        return self._color
-
-
-class CandlestickChart(Chart):
-    """
-    Candlestick chart for rendering OHLC data
-    """
-    def __init__(self, title, series):
-        super().__init__(title)
-
-
-class Annotation:
-    """
-    Base class for chart annotations
-    """
     pass
+
+
+@dataclasses.dataclass(slots=True)
+class ChartGroup(Content):
+    """
+    Displays a grid of charts with shared X axis
+    """
+    charts: Sequence[XYChart] = dataclasses.field(default_factory=list)
 
 
 class SlopeAnnotation(Annotation):
