@@ -1,3 +1,6 @@
+import json
+import uuid
+
 import bokeh.embed
 import bokeh.models
 import numpy
@@ -110,12 +113,53 @@ class HtmlEngine(Engine):
         """
         Render interactive table using jspreadsheets-ce package.
         """
-        return ''
+        df = obj.data
+
+        data = [list() for _ in range(df.shape[0])]
+        columns = []
+
+        for cname, dtype in zip(df.columns, df.dtypes):
+            col = {'title': str(cname)}
+
+            if numpy.issubdtype(dtype, float):
+                col['type'] = 'numeric'
+                for i, val in enumerate(df[cname].values):
+                    data[i].append(float(val))
+            elif numpy.issubdtype(dtype, int):
+                col['type'] = 'numeric'
+                for i, val in enumerate(df[cname].values):
+                    data[i].append(int(val))
+            else:
+                col['type'] = 'text'
+                for i, val in enumerate(df[cname].values):
+                    data[i].append(str(val))
+
+            columns.append(col)
+
+        div_id = str(uuid.uuid4())
+
+        return f'''
+            <div id="{div_id}"></div>
+            <script>
+                var data = {json.dumps(data)};
+                jspreadsheet(document.getElementById('{div_id}'), {{
+                    data: data,
+                    columns: {json.dumps(columns)},
+                    editable: false,
+                    columnResize: true,
+                    columnDrag: false,
+                    rowDrag: false
+                }});
+            </script>
+        '''
 
     def _render_table(self, obj: Table) -> str:
         """
         Render pandas table
         """
+        if obj.interactive:
+            return self._render_interactive_table(obj)
+
         style = obj.data.style.set_table_attributes('class="table table-bordered table-sm table-responsive table-striped"')
         table_styles = []
         if not obj.header:
