@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import pandas
 from reports.html_engine import HtmlEngine
-from reports.definitions import Report, Section, Table, LineChart, DataSeries
+from reports import Report, Section, Table, LineChart, DataSeries, ChartGroup, CandlestickChart
 
 
 class TestReports(TestCase):
@@ -27,6 +27,23 @@ class TestReports(TestCase):
             Section(
                 "Section #3",
                 LineChart("Kuku", DataSeries(x=[1, 2, 3], y=[10, 20, 30]))
+            ),
+            Section(
+                "Section #4",
+                ChartGroup(
+                    CandlestickChart(
+                        "",
+                        pandas.DataFrame([
+                            [1, 2, 0.5, 1.5],
+                            [1.5, 2.5, 1.0, 2.0],
+                            [2.0, 2.5, 1.0, 1.5]
+                        ], columns=['open', 'high', 'low', 'close'])
+                    ),
+                    LineChart(
+                        "Profit",
+                        DataSeries(x=[0, 1, 2], y=[10, 20, 5])
+                    )
+                )
             )
         )
 

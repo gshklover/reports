@@ -208,15 +208,16 @@ class CandlestickChart(XYChart):
     """
     OHLC (open, high, low, close) chart
     """
+    data: pandas.DataFrame = None
 
-    def __init__(self, title, data: pandas.DataFrame, **kwargs):
+    def __init__(self, title: str, data: pandas.DataFrame, **kwargs):
         """
         Initialize with specified data
 
-        :param title:
-        :param data:
+        :param title: chart title
+        :param data: OHLC data
         """
-        super().__init__(title=title, **kwargs)
+        super().__init__(title, **kwargs)
         self.data = data
 
 
@@ -243,6 +244,9 @@ class ChartGroup(Content):
     Displays a grid of charts with shared X axis
     """
     charts: Sequence[XYChart] = dataclasses.field(default_factory=list)
+
+    def __init__(self, *charts: XYChart):
+        self.charts = list(charts)
 
 
 class SlopeAnnotation(Annotation):

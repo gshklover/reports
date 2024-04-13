@@ -14,10 +14,9 @@ from jinja2 import Environment, PackageLoader
 import numbers
 import pandas
 
-from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart, SlopeAnnotation, CandlestickChart, ChartGroup, Content
+from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart, SlopeAnnotation, CandlestickChart, ChartGroup, Content, Chart
 # TODO: move the function definition into reports
-from pyutils.bokehutils import bars
-
+from pyutils.bokehutils import bars, add_crosshair
 
 CHART_SIZE = {
     LineChart.SMALL: (200, 200),
@@ -66,12 +65,11 @@ class HtmlEngine(Engine):
             Box: self._render_box,
             Grid: self._render_grid,
             Table: self._render_table,
-            BarChart: self._render_bar_chart,
-            LineChart: self._render_line_chart,
-            ComboChart: self._render_combo_chart,
-            CandlestickChart: self._render_ohlc_chart,
             ChartGroup: self._render_chart_group
         }
+
+        if isinstance(obj, Chart):
+            return self._render_chart(obj)
 
         if type(obj) not in obj_map:
             raise Exception("Unknown content type: " + str(type(obj)))
@@ -189,7 +187,7 @@ class HtmlEngine(Engine):
 
         return style.to_html()
 
-    def _render_line_chart(self, obj: LineChart) -> str:
+    def _render_line_chart(self, obj: LineChart) -> bokeh.plotting.figure:
         """
         Render a line chart using bokeh
 
@@ -241,9 +239,9 @@ class HtmlEngine(Engine):
             if len(obj.series) and len(obj.series[0].y) and obj.series[0].y[-1] > obj.series[0].y[0]:
                 fig.legend.location = "bottom_right"
 
-        return bokeh.embed.file_html(fig, bokeh.resources.CDN)
+        return fig
 
-    def _render_bar_chart(self, obj: BarChart):
+    def _render_bar_chart(self, obj: BarChart) -> bokeh.plotting.figure:
         """
         Render a bar chart using bokeh
 
@@ -281,9 +279,9 @@ class HtmlEngine(Engine):
         if len(obj.series) <= 1:
             fig.legend[0].visible = False
 
-        return bokeh.embed.file_html(fig, bokeh.resources.CDN)
+        return fig
 
-    def _render_ohlc_chart(self, obj: CandlestickChart):
+    def _render_ohlc_chart(self, obj: CandlestickChart) -> bokeh.plotting.figure:
         """
         Render OHLC chart to the report
 
@@ -357,7 +355,7 @@ class HtmlEngine(Engine):
             fig.vbar(x=index, width=0.8, bottom=numpy.zeros(len(index)), top=volume,
                      fill_color=colors, y_range_name='volume', alpha=0.5, level='underlay')
 
-        return bokeh.embed.file_html(fig, bokeh.resources.CDN)
+        return fig
 
     def _render_combo_chart(self, obj: ComboChart) -> str:
         """
@@ -406,13 +404,43 @@ class HtmlEngine(Engine):
         if len(obj.lines) <= 1 and len(obj.bars) <= 1:
             fig.legend[0].visible = False
 
-        return bokeh.embed.file_html(fig, bokeh.resources.CDN)
+        return fig
+
+    def _render_chart(self, chart: Chart, as_string=True) -> str | bokeh.plotting.figure:
+        """
+        Render specified chart
+        """
+        renderers = {
+            BarChart: self._render_bar_chart,
+            LineChart: self._render_line_chart,
+            ComboChart: self._render_combo_chart,
+            CandlestickChart: self._render_ohlc_chart
+        }
+        if type(chart) not in renderers:
+            raise Exception("Unknown chart type")
+
+        fig = renderers[type(chart)](chart)
+
+        if as_string:
+            return bokeh.embed.file_html(fig, bokeh.resources.CDN)
+
+        return fig
 
     def _render_chart_group(self, group: ChartGroup) -> str:
         """
         Renders a group of axis-aligned charts
         """
-        pass
+        charts = []
+
+        for chart in group.charts:
+            charts.append(self._render_chart(chart, as_string=False))
+
+        for chart in charts[1:]:
+            chart.x_range = charts[0].x_range
+
+        add_crosshair(*charts)
+
+        return bokeh.embed.file_html(bokeh.plotting.gridplot([[chart] for chart in charts]))
 
     def _apply_style(self, series, style):
         """
