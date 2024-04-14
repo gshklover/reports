@@ -1,5 +1,6 @@
 import json
 import uuid
+from typing import Tuple, Dict
 
 import bokeh.embed
 import bokeh.models
@@ -18,12 +19,15 @@ from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, L
 # TODO: move the function definition into reports
 from pyutils.bokehutils import bars, add_crosshair
 
+# pre-defined chart sizes
 CHART_SIZE = {
     LineChart.SMALL: (200, 200),
     LineChart.MEDIUM: (500, 350),
     LineChart.LARGE: (700, 450),
     LineChart.WIDE: (1000, 350)
 }
+
+DEFAULT_TOOLS = "pan,box_zoom,xwheel_zoom,reset,hover,crosshair"
 
 
 class HtmlEngine(Engine):
@@ -151,13 +155,10 @@ class HtmlEngine(Engine):
             </script>
         '''
 
-    def _render_table(self, obj: Table) -> str:
+    def _render_html_table(self, obj: Table) -> str:
         """
-        Render pandas table
+        Render static HTML table
         """
-        if obj.interactive:
-            return self._render_interactive_table(obj)
-
         style = obj.data.style.set_table_attributes('class="table table-bordered table-sm table-responsive table-striped"')
         table_styles = []
         if not obj.header:
@@ -187,6 +188,25 @@ class HtmlEngine(Engine):
 
         return style.to_html()
 
+    def _render_table(self, obj: Table) -> str:
+        """
+        Render pandas table
+        """
+        if obj.interactive:
+            return self._render_interactive_table(obj)
+        else:
+            return self._render_html_table(obj)
+
+    @staticmethod
+    def _chart_size(size: str | Tuple[int, int]) -> Dict[str, int]:
+        """
+        Convert size to width / height
+        """
+        return {
+            'width': CHART_SIZE[size][0] if isinstance(size, str) else size[0],
+            'height': CHART_SIZE[size][1] if isinstance(size, str) else size[1]
+        }
+
     def _render_line_chart(self, obj: LineChart) -> bokeh.plotting.figure:
         """
         Render a line chart using bokeh
@@ -204,10 +224,9 @@ class HtmlEngine(Engine):
 
         fig = bokeh.plotting.figure(
             # toolbar_location=None,
-            # tools="hover",
+            tools=DEFAULT_TOOLS,
             title=obj.title,
-            width=CHART_SIZE[obj.size][0],
-            height=CHART_SIZE[obj.size][1],
+            **self._chart_size(obj.size),
             **extra
         )
 
@@ -232,10 +251,11 @@ class HtmlEngine(Engine):
         if obj.y_axis_title:
             fig.yaxis.axis_label = obj.y_axis_title
 
-        # disable legend
+        # disable legend if no series visible:
         if len(obj.series) <= 1 and len(fig.legend):
             fig.legend[0].visible = False
-        else:
+        elif any(s.title is not None for s in obj.series):
+            # move to bottom right if going up:
             if len(obj.series) and len(obj.series[0].y) and obj.series[0].y[-1] > obj.series[0].y[0]:
                 fig.legend.location = "bottom_right"
 
@@ -257,11 +277,10 @@ class HtmlEngine(Engine):
 
         fig = bokeh.plotting.figure(
             # toolbar_location=None,
-            # tools="hover",
+            tools=DEFAULT_TOOLS,
             title=obj.title,
             x_range=data['x'].values,  # categorical values must be str()
-            width=CHART_SIZE[obj.size][0],
-            height=CHART_SIZE[obj.size][1],
+            **self._chart_size(obj.size)
         )
 
         colors = itertools.cycle(palette)
@@ -281,7 +300,7 @@ class HtmlEngine(Engine):
 
         return fig
 
-    def _render_ohlc_chart(self, obj: CandlestickChart) -> bokeh.plotting.figure:
+    def _render_candlestick_chart(self, obj: CandlestickChart) -> bokeh.plotting.figure:
         """
         Render OHLC chart to the report
 
@@ -296,9 +315,8 @@ class HtmlEngine(Engine):
 
         fig = bokeh.plotting.figure(
             title=obj.title,
-            width=CHART_SIZE[obj.size][0],
-            height=CHART_SIZE[obj.size][1],
-            tools="pan,box_zoom,xwheel_zoom,reset,hover,crosshair"
+            tools=DEFAULT_TOOLS,
+            **self._chart_size(obj.size),
         )
 
         width = 0.6
@@ -374,11 +392,10 @@ class HtmlEngine(Engine):
 
         fig = bokeh.plotting.figure(
             # toolbar_location=None,
-            # tools="hover",
+            tools=DEFAULT_TOOLS,
             title=obj.title,
             x_range=x_range,
-            width=CHART_SIZE[obj.size][0],
-            height=CHART_SIZE[obj.size][1],
+            **self._chart_size(obj.size)
         )
 
         colors = itertools.cycle(palette)
@@ -414,7 +431,7 @@ class HtmlEngine(Engine):
             BarChart: self._render_bar_chart,
             LineChart: self._render_line_chart,
             ComboChart: self._render_combo_chart,
-            CandlestickChart: self._render_ohlc_chart
+            CandlestickChart: self._render_candlestick_chart
         }
         if type(chart) not in renderers:
             raise Exception("Unknown chart type")

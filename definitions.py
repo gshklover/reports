@@ -1,5 +1,6 @@
 import dataclasses
-from typing import Sequence
+from abc import abstractmethod
+from typing import Sequence, Tuple
 
 import pandas
 
@@ -10,11 +11,12 @@ class Engine:
     """
     _engines_ = {}
 
+    @abstractmethod
     def render(self, report):
         pass
 
     @staticmethod
-    def get_engine(name):
+    def get_engine(name: str) -> 'Engine':
         return Engine._engines_[name]()
 
 
@@ -171,7 +173,7 @@ class Chart(Content):
 
     title: str = None
     series: Sequence[DataSeries] = None
-    size: str = MEDIUM
+    size: str | Tuple[int, int] = MEDIUM
     annotations: Sequence[Annotation] = None
 
     def __init__(self, title, *series, size=MEDIUM, annotations=None):
