@@ -1,6 +1,6 @@
 import dataclasses
 from abc import abstractmethod
-from typing import Sequence, Tuple
+from typing import Sequence, Tuple, List
 
 import pandas
 
@@ -33,7 +33,7 @@ class Box(Content):
     """
     Content group. Can group content vertically / horizontally.
     """
-    content: Sequence[Content] = None
+    content: List[Content] = None
     orientation: str = "vertical"
     spacing: int = 0
 
@@ -231,8 +231,12 @@ class ComboChart(XYChart):
     bars: Sequence[DataSeries] = dataclasses.field(default_factory=list)
     lines: Sequence[DataSeries] = dataclasses.field(default_factory=list)
 
+    def __init__(self, title, bars: Sequence[DataSeries], lines: Sequence[DataSeries], **kwargs):
+        super(XYChart, self).__init__(title, **kwargs)
+        self.bars = bars
+        self.lines = lines
 
-@dataclasses.dataclass(slots=True)
+
 class BarChart(XYChart):
     """
     Displays data series as bars
