@@ -232,7 +232,7 @@ class ComboChart(XYChart):
     lines: Sequence[DataSeries] = dataclasses.field(default_factory=list)
 
     def __init__(self, title, bars: Sequence[DataSeries], lines: Sequence[DataSeries], **kwargs):
-        super(XYChart, self).__init__(title, **kwargs)
+        super(ComboChart, self).__init__(title, **kwargs)
         self.bars = bars
         self.lines = lines
 
