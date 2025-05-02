@@ -1,6 +1,6 @@
 import json
 import uuid
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Union
 
 import bokeh.embed
 import bokeh.models
@@ -423,7 +423,7 @@ class HtmlEngine(Engine):
 
         return fig
 
-    def _render_chart(self, chart: Chart, as_string=True) -> str | bokeh.plotting.figure:
+    def _render_chart(self, chart: Chart, as_string=True) -> Union[str, bokeh.plotting.figure]:
         """
         Render specified chart
         """
