@@ -244,7 +244,7 @@ class HtmlEngine(Engine):
                 fig.line(x=s.x, y=s.y, **extra, color=color)
 
             if s.markers:
-                fig.circle(x=s.x, y=s.y, color=color, **(extra if not s.line else {}))
+                fig.scatter(x=s.x, y=s.y, color=color, **(extra if not s.line else {}))
 
         if obj.x_axis_title:
             fig.xaxis.axis_label = obj.x_axis_title
@@ -415,7 +415,7 @@ class HtmlEngine(Engine):
             color = next(colors)
             # TODO: sort line values
             fig.line(x=[str(v) for v in s.x], y=s.y, legend_label=s.title, color=color)
-            fig.circle(x=[str(v) for v in s.x], y=s.y, size=6, fill_color='white', color=color)
+            fig.scatter(x=[str(v) for v in s.x], y=s.y, size=6, fill_color='white', color=color)
 
         # disable legend
         if len(obj.lines) <= 1 and len(obj.bars) <= 1:
