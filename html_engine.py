@@ -516,7 +516,7 @@ class HtmlEngine(Engine):
 Engine._engines_['html'] = HtmlEngine
 
 
-def save_report(report, file):
+def save_report(report: Report, file: str):
     """
     Save report as HTML file
 
