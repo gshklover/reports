@@ -28,34 +28,55 @@ class Content:
     pass
 
 
+class Container(Content):
+    """
+    Base class for content containers.
+    Containers hold other content items.
+    """
+    content: List[Content] = None
+
+    def __init__(self, *content: Content):
+        super().__init__()
+        self.content = list(content)
+
+    def descendants(self):
+        """
+        Returns all descendants of this content item
+        """
+        todo = [self]
+
+        while len(todo):
+            content = todo.pop()
+            yield content
+
+            if isinstance(content, Box):
+                todo += content.content
+
+
 @dataclasses.dataclass
-class Box(Content):
+class Box(Container):
     """
     Content group. Can group content vertically / horizontally.
     """
-    content: List[Content] = None
     orientation: str = "vertical"
     spacing: int = 0
 
     def __init__(self, *content, orientation: str = "vertical", spacing=0):
-        super().__init__()
-        self.content = list(content)
+        super().__init__(*content)
         self.orientation = orientation
         self.spacing = spacing
 
 
 @dataclasses.dataclass
-class Grid(Content):
+class Grid(Container):
     """
     Displays a grid
     """
-    content: Sequence[Content] = None
     columns: int = 1
 
     def __init__(self, *content, columns=1):
-        super().__init__()
+        super().__init__(*content)
         self.columns = columns
-        self.content = list(content)
 
 
 @dataclasses.dataclass
