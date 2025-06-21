@@ -16,8 +16,56 @@
 <title>{{ data.title }}</title>
 
 <body>
-{{render(data)}}
+
+<div class="reports-content" id="reports-content">
+    {{render(data)}}
+</div>
+
+<nav class="reports-toc" id="reports-toc">
+    <div class="reports-toc-handle" id="reports-toc-handle"></div>
+    <div class="reports-toc-sections">
+        <ul class="toc-items">
+            {% for section in data.sections %}
+                <li class="toc-item">
+                    <a href="#{{ section.id }}">{{ section.title }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</nav>
+
+<script>
+    // adds support for resizing TOC using a handle
+    function _tocResize() {
+        var toc = document.getElementById('reports-toc');
+        var content = document.getElementById('reports-content');
+        var handle = document.getElementById('reports-toc-handle');
+        if (handle) {
+           handle.addEventListener('mousedown', _initResize, true);
+        }
+
+        function _initResize(e) {
+          window.addEventListener('mousemove', _doResize, true);
+          window.addEventListener('mouseup', _stopResize, true);
+          e.stopPropagation();
+          e.preventDefault();
+        }
+
+        function _doResize(e) {
+          var width = e.clientX - toc.offsetLeft;
+          toc.style.width = width + 'px';
+          content.style.marginLeft = width + 'px';
+          e.stopPropagation();
+          e.preventDefault();
+        }
+
+        function _stopResize(e) {
+          window.removeEventListener('mousemove', _doResize, true);
+          window.removeEventListener('mouseup', _stopResize, true);
+        }
+    }
+    _tocResize()
+</script>
+
 </body>
-
-
 </html>

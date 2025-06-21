@@ -1,4 +1,7 @@
-<div>
+<div id="{{ data.id }}">
+    {% if data.level == 1 %}
+        <hr>
+    {% endif %}
     <!-- Use font size directly when generating inline reports - otherwise it interferes with jupyterlab-toc -->
     {% if is_inline %}
         <font size="+{{4 - [data.level, 3]|min}}">{{ data.title }}</font>

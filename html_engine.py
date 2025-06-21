@@ -64,13 +64,18 @@ class HtmlEngine(Engine):
         Render a content object
         """
         obj_map = {
-            Report: self._render_report,
             Section: self._render_section,
             Box: self._render_box,
             Grid: self._render_grid,
             Table: self._render_table,
             ChartGroup: self._render_chart_group
         }
+
+        if isinstance(obj, Report):
+            if obj.level == 0:
+                return self._render_report(obj)
+            else:
+                return self._render_section(obj)
 
         if isinstance(obj, Chart):
             return self._render_chart(obj)

@@ -87,6 +87,13 @@ class Section(Box):
     title: str = None
     level: int = 0
 
+    @property
+    def id(self) -> str:
+        """
+        Returns section ID for rendering
+        """
+        return f'section-{id(self)}'
+
     def __init__(self, title, *content, orientation='vertical'):
         super().__init__(*content, orientation=orientation)
         self.title = title
@@ -100,6 +107,13 @@ class Report(Section):
     """
     def __init__(self, title, *content):
         super().__init__(title, *content)
+
+    @property
+    def sections(self) -> List[Section]:
+        """
+        Returns all sections in the report
+        """
+        return [s for s in self.content if isinstance(s, Section)]
 
     def update_levels(self):
         """
