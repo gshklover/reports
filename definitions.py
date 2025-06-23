@@ -135,7 +135,8 @@ class Report(Section):
         """
         Jupyter integration
         """
-        return Engine.get_engine('html').render(self)
+        section = Section(self.title, *self.content)
+        return Engine.get_engine('html').render(section)
 
 
 @dataclasses.dataclass

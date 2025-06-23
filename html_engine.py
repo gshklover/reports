@@ -42,7 +42,7 @@ class HtmlEngine(Engine):
         }
         self._template = template
 
-    def render(self, report: Report) -> str:
+    def render(self, report: Content) -> str:
         """
         Render report into HTML string
 
@@ -52,12 +52,14 @@ class HtmlEngine(Engine):
             loader=PackageLoader('reports', 'templates'))
 
         # update section levels
-        report.update_levels()
-        template = self._env.get_template(self._template)
+        if isinstance(report, Report):
+            report.update_levels()
+            template = self._env.get_template(self._template)
+            return template.render(
+                data=report, **self._defaults
+            )
 
-        return template.render(
-            data=report, **self._defaults
-        )
+        return self._render(report)
 
     def _render(self, obj: Content) -> str:
         """
