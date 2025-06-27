@@ -1,4 +1,5 @@
 import json
+import os
 import uuid
 from typing import Tuple, Dict, Union
 
@@ -49,7 +50,8 @@ class HtmlEngine(Engine):
         :param report: Report object
         """
         self._env = Environment(
-            loader=PackageLoader('reports', 'templates'))
+            loader=PackageLoader('reports', 'templates')
+        )
 
         # update section levels
         if isinstance(report, Report):
@@ -60,6 +62,10 @@ class HtmlEngine(Engine):
             )
 
         return self._render(report)
+        # add styles:
+        # with open(os.path.join(os.path.dirname(__file__), 'templates', 'style.html')) as stream:
+        #     styles = stream.read()
+        # return styles + '\n' + self._render(report)
 
     def _render(self, obj: Content) -> str:
         """
@@ -166,7 +172,8 @@ class HtmlEngine(Engine):
         """
         Render static HTML table
         """
-        style = obj.data.style.set_table_attributes('class="table table-bordered table-sm table-responsive table-striped"')
+        # NOTE: overrides default width=100% from bootstrap
+        style = obj.data.style.set_table_attributes('class="table table-bordered table-sm table-responsive table-striped" style="width: initial;"')
         table_styles = []
         if not obj.header:
             table_styles.append({'selector': '.col_heading', 'props': [('display', 'none')]})

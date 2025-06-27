@@ -5,21 +5,6 @@ from typing import Sequence, Tuple, List
 import pandas
 
 
-class Engine:
-    """
-    Base engine definition
-    """
-    _engines_ = {}
-
-    @abstractmethod
-    def render(self, report):
-        pass
-
-    @staticmethod
-    def get_engine(name: str) -> 'Engine':
-        return Engine._engines_[name]()
-
-
 @dataclasses.dataclass
 class Content:
     """
@@ -131,7 +116,7 @@ class Report(Section):
             if isinstance(o, Box):
                 todo += [(c, l) for c in o.content]
 
-    def _repr_html_(self):
+    def _repr_html_(self) -> str:
         """
         Jupyter integration
         """
@@ -305,3 +290,18 @@ class SlopeAnnotation(Annotation):
         self.color = color
         self.dash = dash
         self.line_width = line_width
+
+
+class Engine:
+    """
+    Base engine definition
+    """
+    _engines_ = {}
+
+    @abstractmethod
+    def render(self, report: Report | Section):
+        pass
+
+    @staticmethod
+    def get_engine(name: str) -> 'Engine':
+        return Engine._engines_[name]()
