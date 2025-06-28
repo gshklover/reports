@@ -1,6 +1,6 @@
 import dataclasses
 from abc import abstractmethod
-from typing import Sequence, Tuple, List
+from typing import Sequence, Tuple, List, Optional
 
 import pandas
 
@@ -84,6 +84,15 @@ class Section(Box):
         self.title = title
         self.level = 0
 
+    def __getitem__(self, title: str) -> Optional[Content]:
+        """
+        Get sub-content by title
+        """
+        for c in self.content:
+            if hasattr(c, 'title') and c.title == title:
+                return c
+        return None
+
 
 @dataclasses.dataclass
 class Report(Section):
@@ -138,7 +147,7 @@ class Table(Content):
     title: str = None
     index: bool = False
     header: bool = True
-    column_style: str = None
+    column_style: str | dict = None
     interactive: bool = True
 
 
