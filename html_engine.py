@@ -175,21 +175,20 @@ class HtmlEngine(Engine):
         # NOTE: overrides default width=100% from bootstrap
         style = obj.data.style.set_table_attributes('class="table table-bordered table-sm table-responsive table-striped" style="width: initial;"')
         table_styles = []
-        if not obj.header:
-            table_styles.append({'selector': '.col_heading', 'props': [('display', 'none')]})
-
-        if not obj.index:
-            table_styles.append({'selector': '.row_heading', 'props': [('display', 'none')]})
-            table_styles.append({'selector': '.blank.level0', 'props': [('display', 'none')]})
+        # if not obj.header:
+        #     table_styles.append({'selector': '.col_heading', 'props': [('display', 'none')]})
+        #
+        # if not obj.index:
+        #     table_styles.append({'selector': '.row_heading', 'props': [('display', 'none')]})
+        #     table_styles.append({'selector': '.blank.level0', 'props': [('display', 'none')]})
 
         if len(table_styles):
             style = style.set_table_styles(table_styles)
 
-        # not supported yet, available in v0.23
-        # if not obj.header:
-        #    style = style.hide_header()
-        # if not obj.index:
-        #    style = style.hide_index()
+        if not obj.header:
+           style = style.hide(axis=1)
+        if not obj.index:
+           style = style.hide(axis=0)
 
         if obj.column_style:
             if callable(obj.column_style):
@@ -200,7 +199,12 @@ class HtmlEngine(Engine):
                 d = obj.column_style
                 style = style.apply(lambda x: self._apply_style(x, d.get(x.name, None)), axis=0)
 
-        return style.to_html()
+        res = style.to_html()
+
+        if obj.title:
+            res = f'<div><p><b>{obj.title}</b></p>{res}</div>'
+
+        return res
 
     def _render_table(self, obj: Table) -> str:
         """
