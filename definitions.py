@@ -37,6 +37,13 @@ class Container(Content):
             if isinstance(content, Box):
                 todo += content.content
 
+    def append(self, content: Content):
+        """
+        Append more content
+        """
+        self.content.append(content)
+        return self
+
 
 @dataclasses.dataclass
 class Box(Container):

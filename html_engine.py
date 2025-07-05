@@ -61,11 +61,11 @@ class HtmlEngine(Engine):
                 data=report, **self._defaults
             )
 
-        return self._render(report)
+        # return self._render(report)
         # add styles:
-        # with open(os.path.join(os.path.dirname(__file__), 'templates', 'style.html')) as stream:
-        #     styles = stream.read()
-        # return styles + '\n' + self._render(report)
+        with open(os.path.join(os.path.dirname(__file__), 'templates', 'style.html')) as stream:
+            styles = stream.read()
+        return styles + '\n' + self._render(report)
 
     def _render(self, obj: Content) -> str:
         """
