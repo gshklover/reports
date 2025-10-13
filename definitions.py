@@ -141,6 +141,17 @@ class Report(Section):
 
 
 @dataclasses.dataclass
+class Text(Content):
+    """
+    Simple text rendering
+
+    :param text: text content (supports markdown)
+    """
+    text: str = ''
+    escape: bool = True
+
+
+@dataclasses.dataclass
 class Table(Content):
     """
     Rendering for a table. Data should be pandas DataFrame

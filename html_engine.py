@@ -13,10 +13,11 @@ import bokeh.plotting
 import bokeh.resources
 import itertools
 from jinja2 import Environment, PackageLoader
+import markupsafe
 import numbers
 import pandas
 
-from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart, SlopeAnnotation, CandlestickChart, ChartGroup, Content, Chart
+from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart, SlopeAnnotation, CandlestickChart, ChartGroup, Content, Chart, Text
 # TODO: move the function definition into reports
 from pyutils.bokehutils import bars, add_crosshair
 
@@ -76,6 +77,7 @@ class HtmlEngine(Engine):
             Box: self._render_box,
             Grid: self._render_grid,
             Table: self._render_table,
+            Text: self._render_text,
             ChartGroup: self._render_chart_group
         }
 
@@ -123,6 +125,12 @@ class HtmlEngine(Engine):
         """
         grid = self._env.get_template('grid.html')
         return grid.render(data=obj, **self._defaults)
+
+    def _render_text(self, obj: Text) -> str:
+        """
+        Render text content
+        """
+        return f'<p>\n{str(markupsafe.escape(obj.text))}\n</p>' if obj.escape else obj.text
 
     def _render_interactive_table(self, obj: Table) -> str:
         """
