@@ -144,7 +144,14 @@ class HtmlEngine(Engine):
         for cname, dtype in zip(df.columns, df.dtypes):
             col = {'title': str(cname)}
 
-            if numpy.issubdtype(dtype, float):
+            if pandas.api.types.is_datetime64_any_dtype(dtype):
+                col['type'] = 'date'
+                for i, val in enumerate(df[cname].values):
+                    if pandas.isna(val):
+                        data[i].append('')
+                    else:
+                        data[i].append(str(val))
+            elif numpy.issubdtype(dtype, float):
                 col['type'] = 'numeric'
                 for i, val in enumerate(df[cname].values):
                     data[i].append(float(val))
@@ -160,8 +167,11 @@ class HtmlEngine(Engine):
             columns.append(col)
 
         div_id = str(uuid.uuid4())
+        title = f'<div><b>{obj.title}</b></div>' if obj.title else ''
 
         return f'''
+            <div>
+            {title}
             <div id="{div_id}"></div>
             <script>
                 var data = {json.dumps(data)};
@@ -174,6 +184,7 @@ class HtmlEngine(Engine):
                     rowDrag: false
                 }});
             </script>
+            </div>
         '''
 
     def _render_html_table(self, obj: Table) -> str:
