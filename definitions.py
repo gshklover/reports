@@ -198,6 +198,7 @@ class DataSeries:
     color: str = None
     line: bool = True
     markers: bool = False
+    dashed: bool = False  # use dashed line
 
 
 @dataclasses.dataclass
@@ -317,6 +318,19 @@ class SlopeAnnotation(Annotation):
         self.color = color
         self.dash = dash
         self.line_width = line_width
+
+
+class SpanAnnotation(Annotation):
+    """
+    Vertical / horizontal span annotation
+    """
+    def __init__(self, orientation='vertical', at: float = None, color=None, opacity=None, dashed: bool = False, line_width: float = 1.0):
+        super().__init__()
+        self.orientation = orientation
+        self.at = at
+        self.color = color
+        self.opacity = opacity
+        self.dashed = dashed
 
 
 class Engine:

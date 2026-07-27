@@ -1,7 +1,7 @@
 import json
 import os
 import uuid
-from typing import Tuple, Dict, Union
+from typing import Tuple, Dict, Union, Sequence
 
 import bokeh.embed
 import bokeh.models
@@ -17,16 +17,17 @@ import markupsafe
 import numbers
 import pandas
 
-from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart, SlopeAnnotation, CandlestickChart, ChartGroup, Content, Chart, Text
+from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart, SlopeAnnotation, SpanAnnotation, CandlestickChart, ChartGroup, Content, Chart, Text, \
+    Annotation
 # TODO: move the function definition into reports
 from pyutils.bokehutils import bars, add_crosshair
 
 # pre-defined chart sizes
 CHART_SIZE = {
-    LineChart.SMALL: (200, 200),
-    LineChart.MEDIUM: (500, 350),
-    LineChart.LARGE: (700, 450),
-    LineChart.WIDE: (1000, 350)
+    Chart.SMALL: (200, 200),
+    Chart.MEDIUM: (500, 350),
+    Chart.LARGE: (700, 450),
+    Chart.WIDE: (1000, 350)
 }
 
 DEFAULT_TOOLS = "pan,box_zoom,xwheel_zoom,reset,hover,crosshair"
@@ -151,6 +152,10 @@ class HtmlEngine(Engine):
                         data[i].append('')
                     else:
                         data[i].append(str(val))
+            elif pandas.api.types.is_string_dtype(dtype):
+                col['type'] = 'text'
+                for i, val in enumerate(df[cname].values):
+                    data[i].append(str(val))
             elif numpy.issubdtype(dtype, float):
                 col['type'] = 'numeric'
                 for i, val in enumerate(df[cname].values):
@@ -278,7 +283,7 @@ class HtmlEngine(Engine):
             assert s.line or s.markers
 
             if s.line:
-                fig.line(x=s.x, y=s.y, **extra, color=color)
+                fig.line(x=s.x, y=s.y, **extra, color=color, line_dash='dashed' if s.dashed else 'solid')
 
             if s.markers:
                 fig.scatter(x=s.x, y=s.y, color=color, **(extra if not s.line else {}))
@@ -533,7 +538,7 @@ class HtmlEngine(Engine):
 
         return '; '.join(result)
 
-    def _render_annotations(self, figure, annotations):
+    def _render_annotations(self, figure, annotations: Sequence[Annotation]):
         """
         Render annotation on the specified figure
 
@@ -546,6 +551,11 @@ class HtmlEngine(Engine):
                     gradient=a.slope, y_intercept=a.intercept,
                     line_color=a.color or 'grey', line_dash=a.dash or [], line_width=a.line_width or 1
                 ))
+            elif isinstance(a, SpanAnnotation):
+                figure.add_layout(bokeh.models.Span(
+                    location=a.at, dimension=a.orientation,
+                    line_color=a.color or 'grey', line_dash='dashed' if a.dashed else [], line_width=a.line_width or 1
+                ))
             else:
                 raise NotImplementedError()
 
@@ -556,10 +566,6 @@ Engine._engines_['html'] = HtmlEngine
 def save_report(report: Report, file: str):
     """
     Save report as HTML file
-
-    :param report:
-    :param file:
-    :return:
     """
     eng = HtmlEngine()
 
