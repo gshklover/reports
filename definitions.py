@@ -143,9 +143,11 @@ class Report(Section):
 @dataclasses.dataclass
 class Text(Content):
     """
-    Simple text rendering
+    Simple text rendering.
+    By default, HTML characters are escaped. Use escape=False to render HTML content.
 
-    :param text: text content (supports markdown)
+    :param text: text content
+    :param escape: if True, escape HTML characters in text, else assume HTML content
     """
     text: str = ''
     escape: bool = True
