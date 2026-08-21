@@ -154,6 +154,14 @@ class Text(Content):
 
 
 @dataclasses.dataclass
+class Badge(Container):
+    """
+    Displays a rounded badge element with a color border on the left side.
+    """
+    color: str = 'blue'
+
+
+@dataclasses.dataclass
 class Table(Content):
     """
     Rendering for a table. Data should be pandas DataFrame

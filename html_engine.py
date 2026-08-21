@@ -17,7 +17,7 @@ import markupsafe
 import numbers
 import pandas
 
-from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart, SlopeAnnotation, SpanAnnotation, CandlestickChart, ChartGroup, Content, Chart, Text, \
+from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart, SlopeAnnotation, SpanAnnotation, CandlestickChart, ChartGroup, Content, Chart, Text, Badge, \
     Annotation
 # TODO: move the function definition into reports
 from pyutils.bokehutils import bars, add_crosshair
@@ -79,6 +79,7 @@ class HtmlEngine(Engine):
             Grid: self._render_grid,
             Table: self._render_table,
             Text: self._render_text,
+            Badge: self._render_badge,
             ChartGroup: self._render_chart_group
         }
 
@@ -132,6 +133,15 @@ class HtmlEngine(Engine):
         Render text content
         """
         return f'<p>\n{str(markupsafe.escape(obj.text))}\n</p>' if obj.escape else obj.text
+
+    def _render_badge(self, obj: Badge) -> str:
+        """
+        Render rounded badge with configurable border/text color.
+        """
+        content = "\n".join([
+            self._render(c) for c in obj.content or tuple()
+        ])
+        return f'<div class="reports-badge" style="border-color: {obj.color};">{content}</div>'
 
     def _render_interactive_table(self, obj: Table) -> str:
         """
