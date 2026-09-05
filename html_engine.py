@@ -157,11 +157,13 @@ class HtmlEngine(Engine):
 
             if pandas.api.types.is_datetime64_any_dtype(dtype):
                 col['type'] = 'date'
-                for i, val in enumerate(df[cname].values):
-                    if pandas.isna(val):
-                        data[i].append('')
-                    else:
-                        data[i].append(str(val))
+                for i , val in enumerate(df[cname].dt.strftime('%Y-%m-%d %H:%M:%S').values):
+                    data[i].append(val)
+                # for i, val in enumerate(df[cname].values):
+                #     if pandas.isna(val):
+                #         data[i].append('')
+                #     else:
+                #         data[i].append(str(val))  # TODO: ignore microseconds
             elif pandas.api.types.is_string_dtype(dtype):
                 col['type'] = 'text'
                 for i, val in enumerate(df[cname].values):
@@ -339,12 +341,8 @@ class HtmlEngine(Engine):
 
         for idx, s in enumerate(obj.series):
             bars(fig, x='x', y='s' + str(idx), num_total=len(obj.series), this_index=idx,
-                 source=source, legend_label=s.title,
+                 source=source, legend_label=str(s.title),
                  color=s.color if s.color is not None else next(colors))
-            # fig.vbar(x=dodge('x', - width/2 + idx * width, range=fig.x_range),
-            #          top='s' + str(idx), source=source,
-            #          legend_label=s.title, width=width * 0.9,
-            #          color=s.color if s.color is not None else next(colors))
 
         # disable legend
         if len(obj.series) <= 1:
