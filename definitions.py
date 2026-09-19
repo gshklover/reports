@@ -170,6 +170,7 @@ class Table(Content):
     :param title: table title (optional)
     :param column_style: callback function to return styles per column
     :param interactive: if True, render interactive table (scrollable, selectable)
+    :param format: string or dict[column name -> string] to format floating point values
     """
     data: pandas.DataFrame = None
     title: str = None
@@ -177,6 +178,7 @@ class Table(Content):
     header: bool = True
     column_style: str | dict = None
     interactive: bool = True
+    format: str | dict = None
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

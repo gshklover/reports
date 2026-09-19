@@ -18,7 +18,10 @@ class TestReports(TestCase):
             "Test Report",
             Section(
                 "Section #1",
-                Table(pandas.DataFrame([(1, 2), (3, 4)], columns=['A', 'B']))
+                Table(
+                    pandas.DataFrame([(1, 2), (3, 4)], columns=['A', 'B']),
+                    format={'A': '{:.2f}'}
+                )
             ),
             Section(
                 "Section #2",

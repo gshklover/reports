@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import uuid
 from typing import Tuple, Dict, Union, Sequence
 
@@ -181,6 +182,12 @@ class HtmlEngine(Engine):
                 for i, val in enumerate(df[cname].values):
                     data[i].append(str(val))
 
+            fmt = obj.format
+            if isinstance(fmt, dict):
+                fmt = fmt.get(str(cname))
+            if fmt is not None and col['type'] == 'numeric' and isinstance(fmt, str):
+                col['format'] = self._js_number_format(fmt)
+
             columns.append(col)
 
         div_id = str(uuid.uuid4())
@@ -193,16 +200,65 @@ class HtmlEngine(Engine):
             <script>
                 var data = {json.dumps(data)};
                 jspreadsheet(document.getElementById('{div_id}'), {{
-                    data: data,
-                    columns: {json.dumps(columns)},
-                    editable: false,
-                    columnResize: true,
-                    columnDrag: false,
-                    rowDrag: false
+                    worksheets: [{{
+                        data: data,
+                        columns: {json.dumps(columns)},
+                        editable: false,
+                        columnResize: true,
+                        columnDrag: false,
+                        rowDrag: false,
+                        rowResize: false
+                    }}]
                 }});
             </script>
             </div>
         '''
+
+    @staticmethod
+    def _js_number_format(fmt: str) -> str:
+        """
+        Convert a python-style float format spec into a jspreadsheet-ce mask.
+
+        Accepts either a full python format string ('{:.2f}') or a bare spec ('.2f').
+        Already-jspreadsheet masks like '0.00' or '#,##0.00' pass through unchanged.
+
+        Examples:
+            '{:.2f}'      -> '0.00'
+            '{:,.2f}'     -> '#,##0.00'
+            '{:,.0f}'     -> '#,##0'
+            '{:,}'        -> '#,##0'
+            '{:.0f}'      -> '0'
+            '{:.3f}'      -> '0.000'
+            '{:.2%}'      -> '0.00%'
+        """
+        spec = fmt.strip()
+        wrapped = spec.startswith('{') and spec.endswith('}')
+        m = re.fullmatch(r'\{([^{}]*)\}', spec, re.S)
+        if m:
+            spec = m.group(1)
+
+        if wrapped or (spec and spec[-1] in 'fFeEgGn%'):
+            # python float format spec
+            precision = 0
+            m = re.search(r'\.(\d+)', spec)
+            if m:
+                precision = int(m.group(1))
+
+            grouping = ',' in spec or '_' in spec
+
+            mask = '#,##0' if grouping else '0'
+            if precision:
+                mask += '.' + '0' * precision
+
+            if spec.endswith('%'):
+                mask += '%'
+
+            return mask
+
+        # assume the value is already a jspreadsheet mask
+        if not spec:
+            return '0'
+        return fmt.strip()
 
     def _render_html_table(self, obj: Table) -> str:
         """
@@ -225,6 +281,19 @@ class HtmlEngine(Engine):
            style = style.hide(axis=1)
         if not obj.index:
            style = style.hide(axis=0)
+
+        if obj.format:
+            fmt_map = {}
+            for cname, dtype in zip(obj.data.columns, obj.data.dtypes):
+                fmt = obj.format
+                if isinstance(fmt, dict):
+                    fmt = fmt.get(str(cname))
+                if fmt is not None and (
+                        numpy.issubdtype(dtype, float) or numpy.issubdtype(dtype, int)
+                ):
+                    fmt_map[str(cname)] = fmt
+            if fmt_map:
+                style = style.format(fmt_map)
 
         if obj.column_style:
             if callable(obj.column_style):
