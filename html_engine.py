@@ -18,7 +18,7 @@ import markupsafe
 import numbers
 import pandas
 
-from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart, SlopeAnnotation, SpanAnnotation, CandlestickChart, ChartGroup, Content, Chart, Text, Badge, \
+from .definitions import Engine, Report, Section, Box, Grid, Table, TextStyle, LineChart, ComboChart, BarChart, SlopeAnnotation, SpanAnnotation, CandlestickChart, ChartGroup, Content, Chart, Text, HTML, Badge, \
     Annotation
 # TODO: move the function definition into reports
 from pyutils.bokehutils import bars, add_crosshair
@@ -80,6 +80,7 @@ class HtmlEngine(Engine):
             Grid: self._render_grid,
             Table: self._render_table,
             Text: self._render_text,
+            HTML: self._render_html,
             Badge: self._render_badge,
             ChartGroup: self._render_chart_group
         }
@@ -133,7 +134,13 @@ class HtmlEngine(Engine):
         """
         Render text content
         """
-        return f'<p>\n{str(markupsafe.escape(obj.text))}\n</p>' if obj.escape else obj.text
+        return f'<p>\n{str(markupsafe.escape(obj.text))}\n</p>'
+
+    def _render_html(self, obj: HTML) -> str:
+        """
+        Render raw HTML content without escaping
+        """
+        return obj.text
 
     def _render_badge(self, obj: Badge) -> str:
         """
