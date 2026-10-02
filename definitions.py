@@ -143,8 +143,9 @@ class Report(Section):
 @dataclasses.dataclass
 class Text(Content):
     """
-    Simple text rendering.
-    HTML characters are escaped by default.
+    Plain text. 
+    
+    NOTE: special characters are escaped when rendering HTML.
 
     :param text: text content
     """
