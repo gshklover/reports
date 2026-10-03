@@ -332,7 +332,7 @@ class SlopeAnnotation(Annotation):
 
     Renders line y(x) = slope * x + intercept
     """
-    def __init__(self, intercept=0, slope=0, color=None, dash=None, line_width=None):
+    def __init__(self, intercept: float = 0, slope: float = 0, color=None, dash=None, line_width=None):
         super().__init__()
         self.intercept = intercept
         self.slope = slope
@@ -346,7 +346,7 @@ class SpanAnnotation(Annotation):
     """
     Vertical / horizontal span annotation
     """
-    def __init__(self, orientation='vertical', at: float = None, color=None, opacity=None, dashed: bool = False, line_width: float = 1.0):
+    def __init__(self, orientation: str = 'vertical', at: float = None, color=None, opacity=None, dashed: bool = False, line_width: float = 1.0):
         super().__init__()
         self.orientation = orientation
         self.at = at
@@ -363,8 +363,16 @@ class Engine:
 
     @abstractmethod
     def render(self, report: Report | Section):
+        """
+        Render report to output format
+
+        :param report: report to render
+        """
         pass
 
     @staticmethod
     def get_engine(name: str) -> 'Engine':
+        """
+        Get engine by name
+        """
         return Engine._engines_[name]()
